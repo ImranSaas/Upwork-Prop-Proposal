@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import type { Screen } from "@/app/page"
+import { useToast } from "@/components/ui/use-toast"
 
 interface JobFeedScreenProps {
   onNavigate: (screen: Screen) => void
@@ -34,152 +35,85 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
   const [selectedBudget, setSelectedBudget] = useState("all")
   const [selectedExperience, setSelectedExperience] = useState("all")
   const [savedJobs, setSavedJobs] = useState<number[]>([])
-
-  const jobs = [
+  const [jobs, setJobs] = useState([
     {
       id: 1,
-      title: "Build a React.js E-commerce Platform with Advanced Features",
-      description:
-        "I'm looking for an experienced React.js developer to build a comprehensive e-commerce platform. The project includes user authentication, product catalog, shopping cart, payment integration, and admin dashboard. Must have experience with modern React patterns, state management, and API integration.",
-      aiSummary:
-        "🎯 **Perfect Match**: E-commerce platform using React.js with full-stack features. Requires 3+ years React experience, payment integration skills, and modern development practices. Great for developers with e-commerce background.",
-      budget: "$3,000 - $5,000",
+      matchScore: 95,
+      title: "Unity 2D Mobile Game Developer (Mario Party-inspired App Game)",
+      highlights: "Develop a 2D mobile game inspired by Mario Party for a global audience. Includes main map, themed worlds, turn-based movement, and mini-games.",
+      description: `We're developing a 2D mobile game inspired by Mario Party, targeting a global audience. The game will include:\n\n- A main map with multiple themed worlds\n- Turn-based movement through each world (like Mario Party, but without stars)\n- Players advance by rolling, moving through steps, and playing short mini-games to earn points\n- Mini-games are simple, fun, and take less than 3 minutes to play\n\nWe're looking for a Unity developer to build the entire app, not just the mini-games. This includes the core game loop, world navigation, player progression, and integration of multiple mini-games. Ideally, you'll use existing Unity assets or plugins to reduce cost and speed up development.\n\nExample mini-games: Puzzle, Memory Flip, Rope Pull\nWe're cost-conscious — please suggest ready-made or simple mini-game templates where possible.\n\nIf you're interested, send your portfolio`,
+      aiSummary: "Build a 2D mobile game inspired by Mario Party, including a main map, themed worlds, and simple mini-games. The developer will handle the full app, from core gameplay to mini-game integration, using Unity and ready-made assets where possible.",
+      howToApply: "Send your portfolio",
+      budget: "$2,000 - $4,000",
       budgetType: "Fixed price",
       client: {
-        name: "TechCorp Solutions",
+        name: "GameStudioX",
         location: "United States",
-        rating: 4.9,
-        reviewCount: 127,
-        totalSpent: "$50K+",
-        verified: true,
-        memberSince: "2019",
-      },
-      skills: ["React", "JavaScript", "Node.js", "MongoDB", "Stripe API", "Redux"],
-      proposals: 15,
-      timePosted: "2 hours ago",
-      duration: "1 to 3 months",
-      experienceLevel: "Intermediate",
-      category: "Web Development",
-      featured: true,
-      urgent: false,
-      connectsRequired: 6,
-    },
-    {
-      id: 2,
-      title: "Mobile App Development - React Native for Healthcare Platform",
-      description:
-        "We need a skilled React Native developer to create a healthcare mobile application. The app will include patient management, appointment scheduling, telemedicine features, and secure messaging. HIPAA compliance knowledge is preferred.",
-      aiSummary:
-        "🏥 **Healthcare Focus**: React Native mobile app with telemedicine features. Requires healthcare/HIPAA experience, real-time messaging, and appointment systems. High-value project with growth potential.",
-      budget: "$40 - $60/hr",
-      budgetType: "Hourly",
-      client: {
-        name: "HealthTech Innovations",
-        location: "Canada",
         rating: 4.8,
-        reviewCount: 89,
-        totalSpent: "$100K+",
+        reviewCount: 54,
+        totalSpent: "$30K+",
         verified: true,
         memberSince: "2020",
       },
-      skills: ["React Native", "TypeScript", "Firebase", "WebRTC", "HIPAA", "Socket.io"],
-      proposals: 8,
-      timePosted: "4 hours ago",
-      duration: "3 to 6 months",
-      experienceLevel: "Expert",
-      category: "Mobile Development",
-      featured: false,
-      urgent: true,
-      connectsRequired: 8,
-    },
-    {
-      id: 3,
-      title: "Full-Stack Developer Needed for SaaS Dashboard",
-      description:
-        "Looking for a full-stack developer to build a comprehensive SaaS dashboard. The project includes user management, analytics, billing integration, and real-time data visualization. Experience with modern frameworks and cloud deployment required.",
-      aiSummary:
-        "📊 **SaaS Opportunity**: Full-stack dashboard with analytics and billing. Needs cloud deployment experience, data visualization skills, and SaaS architecture knowledge. Long-term partnership potential.",
-      budget: "$4,500 - $7,500",
-      budgetType: "Fixed price",
-      client: {
-        name: "StartupXYZ",
-        location: "United Kingdom",
-        rating: 4.7,
-        reviewCount: 45,
-        totalSpent: "$25K+",
-        verified: false,
-        memberSince: "2022",
-      },
-      skills: ["React", "Node.js", "PostgreSQL", "AWS", "Stripe", "Chart.js"],
-      proposals: 23,
-      timePosted: "6 hours ago",
+      skills: ["Unity", "C#", "2D Game Development", "Mobile", "Game Design"],
+      proposals: 12,
+      timePosted: "1 hour ago",
       duration: "1 to 3 months",
       experienceLevel: "Intermediate",
-      category: "Web Development",
-      featured: false,
+      category: "Game Development",
+      featured: true,
       urgent: false,
-      connectsRequired: 4,
+      connectsRequired: 6,
+      isUnread: true,
+      deliveryDate: null,
     },
     {
-      id: 4,
-      title: "WordPress Website Redesign with Custom Theme Development",
-      description:
-        "We need a WordPress expert to redesign our existing website with a custom theme. The project includes responsive design, SEO optimization, performance improvements, and custom post types. Must have strong design and development skills.",
-      aiSummary:
-        "🎨 **Design + Dev**: WordPress redesign with custom theme development. Requires design skills, SEO knowledge, and performance optimization. Good for WordPress specialists with design background.",
-      budget: "$1,500 - $3,000",
+      id: 2,
+      matchScore: 90,
+      title: "Development of a 2D web based animated 'car delivery' game",
+      highlights: "Develop a 2D web-based animated car delivery game for an event stand. Engage attendees with a simple, offline-enabled tablet game.",
+      description: `I have a potential project to develop a 2D based, tablet game for use on an event stand to engage attendees.\n\nThe delivery date is 1st October 2025.\n\nLonger description:\nWe're looking for ways to engage people on the stand, and one idea that they're keen to explore is a relatively simple online game that people can play on tablets on the exhibition stand. It would be more as a way of engaging guests and helping people to really understand and remember the key selling points of the vehicles.\n\nOur working idea for the game is that it'd be based around navigating city streets, aiming to make as many deliveries as possible in a fixed time e.g. 2 minutes.\n\nIt would need to be fully animated and offline enabled for tablet use.\n\nCurrently we are are looking for a ballpark cost to guide the client and set expectations.`,
+      aiSummary: "Create a simple, animated 2D car delivery game for tablets, designed to engage event attendees. The game should work offline, focus on city navigation and deliveries, and be ready by October 1, 2025.",
+      howToApply: null,
+      budget: "$3,000 - $6,000",
       budgetType: "Fixed price",
       client: {
-        name: "Digital Marketing Pro",
-        location: "Australia",
-        rating: 4.6,
-        reviewCount: 67,
-        totalSpent: "$15K+",
-        verified: true,
-        memberSince: "2021",
-      },
-      skills: ["WordPress", "PHP", "CSS", "JavaScript", "SEO", "Figma"],
-      proposals: 31,
-      timePosted: "8 hours ago",
-      duration: "Less than 1 month",
-      experienceLevel: "Intermediate",
-      category: "Web Development",
-      featured: false,
-      urgent: false,
-      connectsRequired: 2,
-    },
-    {
-      id: 5,
-      title: "AI-Powered Data Analytics Platform Development",
-      description:
-        "Seeking an experienced developer to build an AI-powered data analytics platform. The project involves machine learning integration, data visualization, real-time processing, and API development. Strong Python and ML experience required.",
-      aiSummary:
-        "🤖 **AI/ML Project**: Data analytics platform with machine learning integration. Requires Python expertise, ML knowledge, and data visualization skills. High-tech project with cutting-edge technologies.",
-      budget: "$60 - $80/hr",
-      budgetType: "Hourly",
-      client: {
-        name: "DataFlow Analytics",
-        location: "Germany",
-        rating: 4.9,
-        reviewCount: 156,
-        totalSpent: "$200K+",
+        name: "EventGamesCo",
+        location: "United Kingdom",
+        rating: 4.7,
+        reviewCount: 32,
+        totalSpent: "$12K+",
         verified: true,
         memberSince: "2018",
       },
-      skills: ["Python", "Machine Learning", "TensorFlow", "React", "PostgreSQL", "Docker"],
-      proposals: 12,
-      timePosted: "1 day ago",
-      duration: "3 to 6 months",
-      experienceLevel: "Expert",
-      category: "Data Science",
-      featured: true,
+      skills: ["JavaScript", "HTML5", "2D Animation", "Game Development", "Tablet Apps"],
+      proposals: 8,
+      timePosted: "3 hours ago",
+      duration: "Less than 1 month",
+      experienceLevel: "Intermediate",
+      category: "Game Development",
+      featured: false,
       urgent: false,
-      connectsRequired: 10,
+      connectsRequired: 4,
+      isUnread: true,
+      deliveryDate: "1st October 2025",
     },
-  ]
+  ])
+
+  const { toast } = useToast()
 
   const toggleSaveJob = (jobId: number) => {
-    setSavedJobs((prev) => (prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]))
+    setSavedJobs((prev) => {
+      const isSaved = prev.includes(jobId)
+      const newSaved = isSaved ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+      toast({
+        title: isSaved ? "Job removed from saved" : "Job saved!",
+        description: isSaved
+          ? "This job has been removed from your saved list."
+          : "You can view your saved jobs in your dashboard.",
+      })
+      return newSaved
+    })
   }
 
   const getExperienceBadgeColor = (level: string) => {
@@ -203,6 +137,51 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
       selectedCategory === "all" || job.category.toLowerCase().includes(selectedCategory.toLowerCase())
     return matchesSearch && matchesCategory
   })
+
+  const loadMoreJobs = async () => {
+    setIsLoading(true)
+    const delay = Math.floor(Math.random() * 2000) + 2000
+    await new Promise(resolve => setTimeout(resolve, delay))
+    const nextId = jobs.length + 1
+    const newJobs = Array.from({ length: 5 }).map((_, i) => {
+      const title = `New Job ${nextId + i}`
+      const description = "This is a newly loaded job. The project is looking for a skilled developer."
+      return {
+        id: nextId + i,
+        matchScore: Math.floor(Math.random() * 30) + 70,
+        title,
+        highlights: "A new opportunity for developers.",
+        description,
+        aiSummary: `Quick summary: ${title} - ${description}`,
+        howToApply: null,
+        budget: "$1,000 - $2,000",
+        budgetType: "Fixed price",
+        client: {
+          name: "New Client",
+          location: "Remote",
+          rating: 4.5,
+          reviewCount: 10,
+          totalSpent: "$5K+",
+          verified: false,
+          memberSince: "2023",
+        },
+        skills: ["JavaScript", "React"],
+        proposals: Math.floor(Math.random() * 50),
+        timePosted: "just now",
+        duration: "1 to 3 months",
+        experienceLevel: "Intermediate",
+        category: "Web Development",
+        featured: false,
+        urgent: false,
+        connectsRequired: 2,
+        isUnread: true,
+        deliveryDate: null,
+      }
+    })
+    setJobs(prev => [...prev, ...newJobs])
+    setDisplayedJobs(prev => prev + 5)
+    setIsLoading(false)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -348,11 +327,12 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
                       {/* Client Info */}
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-semibold text-primary">{job.client.name.charAt(0)}</span>
+                          {/* Removed client name */}
                         </div>
+                        {job.client && (
                         <div>
                           <div className="flex items-center gap-1">
-                            <span className="text-sm font-medium">{job.client.name}</span>
+                              {/* Removed client name */}
                             {job.client.verified && <Verified className="h-3 w-3 text-blue-500" />}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -368,6 +348,7 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
                             <span>{job.client.totalSpent} spent</span>
                           </div>
                         </div>
+                        )}
                       </div>
                     </div>
 
@@ -376,7 +357,13 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
                       <div className="text-right text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          <span>{job.proposals} proposals</span>
+                          <span>{(() => {
+                            if (job.proposals < 5) return 'Less than 5';
+                            if (job.proposals < 10) return '5 to 10';
+                            if (job.proposals < 15) return '10 to 15';
+                            if (job.proposals < 50) return '20 to 50';
+                            return '50+';
+                          })()}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
@@ -392,7 +379,7 @@ export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
                         className="hover-lift"
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        Apply Now
+                        Generate Proposal
                       </Button>
                     </div>
                   </div>

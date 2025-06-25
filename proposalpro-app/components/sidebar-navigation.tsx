@@ -34,7 +34,16 @@ export function SidebarNavigation({ currentScreen, onNavigate }: SidebarNavigati
       <Sidebar side="left" variant="sidebar" collapsible="icon">
         <SidebarHeader className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <span className="text-lg font-semibold text-primary">ProposalPro</span>
+            <svg viewBox="0 0 64 64" width="24" height="24" aria-label="UpGenie Logo" className="inline-block align-middle">
+              <path d="M8 16v16c0 13 20 13 20 0V16" fill="none" stroke="url(#ug-gradient)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M36 32c0 13 20 13 20 0 0-8-8-8-8 0 0 8-8 8-8 0V16" fill="none" stroke="url(#ug-gradient)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="ug-gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#22c55e" />
+                  <stop offset="1" stopColor="#0ea5e9" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
           <SidebarTrigger />
         </SidebarHeader>

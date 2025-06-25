@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ProposalPro - AI-Powered Upwork Proposals",
+  title: "UpGenie - AI-Powered Upwork Proposals",
   description: "Generate winning proposals, manage your pipeline, and get job alerts for Upwork freelancers",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
     generator: 'v0.dev'

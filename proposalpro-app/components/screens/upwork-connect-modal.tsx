@@ -42,7 +42,7 @@ export function UpworkConnectModal({ onNavigate, onConnectAndLogin }: UpworkConn
           </div>
           <CardTitle className="text-2xl font-bold">Connect your Upwork account</CardTitle>
           <p className="text-muted-foreground">
-            Unlock the full power of ProposalPro by connecting your Upwork profile
+            Unlock the full power of UpGenie by connecting your Upwork profile
           </p>
         </CardHeader>
 

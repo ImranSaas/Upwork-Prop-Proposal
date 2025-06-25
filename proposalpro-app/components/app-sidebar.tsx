@@ -23,8 +23,8 @@ interface AppSidebarProps {
 export function AppSidebar({ currentScreen, onNavigate }: AppSidebarProps) {
   const navItems = [
     { id: "dashboard" as Screen, icon: Home, label: "Dashboard", badge: null },
-    { id: "job-feed" as Screen, icon: Briefcase, label: "Job Feed", badge: null },
     { id: "job-alerts" as Screen, icon: Bell, label: "Job Alerts", badge: 3 },
+    { id: "job-feed" as Screen, icon: Briefcase, label: "Job Feed", badge: null },
     { id: "proposals" as Screen, icon: FileText, label: "Proposals", badge: 2 },
     { id: "messaging" as Screen, icon: MessageSquare, label: "Messages", badge: 1 },
     { id: "settings" as Screen, icon: Settings, label: "Settings", badge: null },
@@ -38,7 +38,9 @@ export function AppSidebar({ currentScreen, onNavigate }: AppSidebarProps) {
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <h2 className="text-xl font-bold text-primary">ProposalPro</h2>
+            <h2 className="text-xl font-bold text-primary">
+              <span className="font-extrabold text-xl text-white">UG</span>
+            </h2>
             <p className="text-xs text-muted-foreground">AI-Powered Proposals</p>
           </div>
         </div>

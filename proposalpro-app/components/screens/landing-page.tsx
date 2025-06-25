@@ -104,9 +104,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 animate-bounce-in">
             <div className="w-16 h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-2xl md:text-3xl">PP</span>
+              <span className="font-extrabold text-3xl md:text-4xl text-white">UG</span>
             </div>
-            <span className="text-3xl md:text-4xl font-bold">ProposalPro</span>
+            <span className="text-3xl md:text-4xl font-bold">UpGenie</span>
           </div>
 
           {/* Hero Messaging */}
@@ -118,7 +118,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               </span>
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Imagine landing your dream jobs faster. ProposalPro uses AI to write winning proposals, find perfect jobs,
+              Imagine landing your dream jobs faster. UpGenie uses AI to write winning proposals, find perfect jobs,
               and manage clients—all for less than your daily coffee.
             </p>
           </div>
@@ -162,7 +162,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             <Badge className="bg-primary/10 text-primary border-primary/20 text-base md:text-lg px-4 md:px-6 py-2 md:py-3">
               How It Works
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">How You'll Win with ProposalPro</h2>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">How You'll Win with UpGenie</h2>
             <p className="text-lg md:text-xl text-primary font-semibold max-w-2xl mx-auto">
               Work smarter, win more, stress less.
             </p>
@@ -269,14 +269,14 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Why Choose ProposalPro Section */}
+      {/* Why Choose UpGenie Section */}
       <section className="px-4 py-16 md:py-20 bg-muted/30">
         <div className="max-w-4xl mx-auto">
           <div className="text-center space-y-6 mb-12 md:mb-16">
             <Badge className="bg-primary/10 text-primary border-primary/20 text-base md:text-lg px-4 md:px-6 py-2 md:py-3">
               Why Choose Us
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">Why Freelancers Love ProposalPro</h2>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">Why Freelancers Love UpGenie</h2>
           </div>
 
           <div className="space-y-6 md:space-y-8 mb-12">
@@ -332,7 +332,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             className="h-14 md:h-16 px-8 md:px-12 text-lg md:text-xl font-bold bg-primary hover:bg-primary/90 hover-lift shadow-xl transform transition-all duration-200 hover:scale-105 touch-target cta-pulse"
             onClick={() => onNavigate("login")}
           >
-            Get ProposalPro Now
+            Get UpGenie Now
             <ArrowRight className="ml-2 md:ml-3 h-5 w-5 md:h-6 md:w-6" />
           </Button>
           <div className="space-y-2">
@@ -350,9 +350,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">PP</span>
+                <span className="font-extrabold text-lg text-white">UG</span>
               </div>
-              <span className="font-bold text-xl">ProposalPro</span>
+              <span className="font-bold text-xl">UpGenie</span>
             </div>
             <div className="flex gap-6 md:gap-8">
               <Button
@@ -378,9 +378,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           </div>
           <div className="text-center text-muted-foreground mt-6 md:mt-8 pt-6 md:pt-8 border-t">
             <p className="text-base md:text-lg font-medium mb-2">
-              Your next big client is waiting. Join ProposalPro today.
+              Your next big client is waiting. Join UpGenie today.
             </p>
-            <p className="text-sm md:text-base">© 2024 ProposalPro. All rights reserved.</p>
+            <p className="text-sm md:text-base">© 2024 UpGenie. All rights reserved.</p>
           </div>
         </div>
       </footer>

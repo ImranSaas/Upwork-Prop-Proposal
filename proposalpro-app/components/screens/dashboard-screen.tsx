@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Bell, Briefcase, TrendingUp, Clock, DollarSign, ExternalLink, MapPin, Star } from "lucide-react"
+import { FileText, Bell, Briefcase, TrendingUp, Clock, DollarSign, ExternalLink, MapPin, Star, Check } from "lucide-react"
 import type { Screen } from "@/app/page"
 
 interface DashboardScreenProps {
@@ -50,6 +50,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     {
       id: 1,
       title: "React Developer for E-commerce Platform",
+      summary: "The client is looking for someone who can build a modern e-commerce platform with advanced filtering, real-time inventory management, and seamless payment integration. You'll need strong TypeScript skills and experience with state management libraries to create a scalable shopping experience.",
       budget: "$2,500 - $5,000",
       type: "Fixed Price",
       client: "TechCorp Solutions",
@@ -60,7 +61,8 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     },
     {
       id: 2,
-      title: "Full-Stack Developer - SaaS Application",
+      title: "Full-Stack Developer - B2B SaaS Platform",
+      summary: "The client is looking for someone who can help build a B2B SaaS platform from the ground up. You'll be working on user authentication, subscription management, analytics dashboard, and API development. Experience with Node.js, React, and cloud deployment is essential for this role.",
       budget: "$30 - $50/hr",
       type: "Hourly",
       client: "StartupXYZ",
@@ -72,6 +74,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     {
       id: 3,
       title: "Mobile App Development - React Native",
+      summary: "The client is looking for someone who can create a cross-platform mobile app for a fitness startup. You'll be building user profiles, workout tracking, social features, and push notifications. Experience with mobile app deployment and performance optimization will be crucial for success.",
       budget: "$3,000 - $8,000",
       type: "Fixed Price",
       client: "InnovateLab",
@@ -188,6 +191,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-base mb-2">{job.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{job.summary}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="font-medium text-primary text-lg">{job.budget}</span>
                       <span>{job.type}</span>
@@ -201,10 +205,11 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
                 {/* Simplified Client Info */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 text-sm">
-                    <span className="font-medium">{job.client}</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span>{job.rating}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                        <Check className="h-3 w-3 fill-green-600 text-green-600" />
+                      </div>
+                      <span className="font-medium">Payment Verified</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />

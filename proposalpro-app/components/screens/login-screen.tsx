@@ -151,11 +151,11 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
       <Card className="w-full max-w-md animate-bounce-in">
         <CardHeader className="text-center">
           <div className="w-16 h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-2xl md:text-3xl">PP</span>
+            <span className="font-extrabold text-3xl md:text-4xl text-white">UG</span>
           </div>
           <CardTitle className="text-2xl font-bold">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
           <CardDescription>
-            {isSignUp ? "Start generating winning proposals today" : "Sign in to your ProposalPro account"}
+            {isSignUp ? "Start generating winning proposals today" : "Sign in to your UpGenie account"}
           </CardDescription>
         </CardHeader>
 

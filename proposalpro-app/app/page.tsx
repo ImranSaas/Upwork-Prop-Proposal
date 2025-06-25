@@ -54,6 +54,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [navigationHistory, setNavigationHistory] = useState<Screen[]>([])
   const [showUpworkModal, setShowUpworkModal] = useState(false)
+  const [selectedJob, setSelectedJob] = useState(null)
 
   const handleNavigate = (screen: Screen) => {
     setNavigationHistory((prev) => [...prev, currentScreen])
@@ -103,12 +104,15 @@ export default function Home() {
       <div className="min-h-screen bg-background">
         {currentScreen === "landing" && <LandingPage onNavigate={handleNavigate} />}
         {currentScreen === "login" && (
-          <LoginScreen onNavigate={handleNavigate} onLogin={handleLogin} onShowUpworkModal={handleShowUpworkModal} />
+          <LoginScreen onNavigate={handleNavigate} onLogin={handleLogin} onSignupWithUpworkConnect={handleShowUpworkModal} />
         )}
-        {showUpworkModal && <UpworkConnectModal onConnect={handleUpworkConnect} onClose={handleCloseUpworkModal} />}
+        {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleUpworkConnect} />}
       </div>
     )
   }
+
+  // No-op handlers for required props
+  const noop = () => {}
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -119,31 +123,31 @@ export default function Home() {
       case "proposal-editor":
         return <ProposalEditor onNavigate={handleNavigate} />
       case "proposal-success":
-        return <ProposalSuccessModal onNavigate={handleNavigate} />
+        return <ProposalSuccessModal onNavigate={handleNavigate} onClose={noop} />
       case "job-alerts":
-        return <JobAlertsDashboard onNavigate={handleNavigate} />
+        return <JobAlertsDashboard onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
       case "job-details":
-        return <JobDetailsScreen onNavigate={handleNavigate} onGoBack={canGoBack ? handleGoBack : undefined} />
+        return <JobDetailsScreen job={selectedJob} onNavigate={handleNavigate} onGoBack={canGoBack ? handleGoBack : undefined} />
       case "job-alert-settings":
-        return <JobAlertSettingsModal onNavigate={handleNavigate} />
+        return <JobAlertSettingsModal onClose={noop} onSave={noop} />
       case "pipeline":
         return <PipelineDashboard onNavigate={handleNavigate} />
       case "messaging":
         return <ClientMessaging onNavigate={handleNavigate} />
       case "pipeline-reminder":
-        return <PipelineReminderModal onNavigate={handleNavigate} />
+        return <PipelineReminderModal onClose={noop} onNavigate={handleNavigate} />
       case "billing":
-        return <BillingScreen onNavigate={handleNavigate} />
+        return <BillingScreen onGoBack={noop} />
       case "settings":
-        return <SettingsScreen onNavigate={handleLogout} />
+        return <SettingsScreen onLogout={handleLogout} />
       case "help":
-        return <HelpScreen onNavigate={handleNavigate} />
+        return <HelpScreen />
       case "error":
         return <ErrorScreen onNavigate={handleNavigate} />
       case "api-error":
         return <ApiErrorScreen onNavigate={handleNavigate} />
       case "onboarding":
-        return <OnboardingWizard onNavigate={handleNavigate} />
+        return <OnboardingWizard onComplete={noop} />
       case "notifications":
         return <NotificationsScreen onNavigate={handleNavigate} onGoBack={canGoBack ? handleGoBack : undefined} />
       case "job-feed":
@@ -158,13 +162,13 @@ export default function Home() {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar currentScreen={currentScreen} onNavigate={handleNavigate} />
         <SidebarInset className="flex-1">
-          <TopBar currentScreen={currentScreen} onNavigate={handleNavigate} />
+          <TopBar onNavigate={handleNavigate} />
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto">{renderScreen()}</div>
           </main>
         </SidebarInset>
       </div>
-      {showUpworkModal && <UpworkConnectModal onConnect={handleUpworkConnect} onClose={handleCloseUpworkModal} />}
+      {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleUpworkConnect} />}
     </SidebarProvider>
   )
 }
