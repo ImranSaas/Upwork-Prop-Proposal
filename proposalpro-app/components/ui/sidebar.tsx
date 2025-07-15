@@ -73,6 +73,12 @@ const SidebarProvider = React.forwardRef<
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
 
+  // Swipe detection state
+  const touchStartX = React.useRef<number | null>(null)
+  const touchStartY = React.useRef<number | null>(null)
+  const SWIPE_AREA_WIDTH = 20 // px
+  const SWIPE_THRESHOLD = 40 // px, minimum distance to consider a swipe
+
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen)
@@ -109,6 +115,41 @@ const SidebarProvider = React.forwardRef<
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [toggleSidebar])
+
+  // Swipe gesture logic for mobile: only open on left-edge swipe
+  React.useEffect(() => {
+    if (!isMobile) return
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return
+      const touch = e.touches[0]
+      // Only start if touch is within left edge area
+      if (touch.clientX <= SWIPE_AREA_WIDTH) {
+        touchStartX.current = touch.clientX
+        touchStartY.current = touch.clientY
+      } else {
+        touchStartX.current = null
+        touchStartY.current = null
+      }
+    }
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return
+      const touch = e.changedTouches[0]
+      const dx = touch.clientX - touchStartX.current
+      const dy = Math.abs(touch.clientY - touchStartY.current)
+      // Only consider horizontal left swipe (right-to-left)
+      if (dx < -SWIPE_THRESHOLD && dy < SWIPE_AREA_WIDTH) {
+        setOpenMobile(true)
+      }
+      touchStartX.current = null
+      touchStartY.current = null
+    }
+    window.addEventListener("touchstart", handleTouchStart)
+    window.addEventListener("touchend", handleTouchEnd)
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart)
+      window.removeEventListener("touchend", handleTouchEnd)
+    }
+  }, [isMobile])
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -353,7 +394,7 @@ const SidebarContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"di
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
+        "flex min-h-0 flex-1 flex-col gap-2 group-data-[collapsible=icon]:overflow-hidden",
         className,
       )}
       {...props}

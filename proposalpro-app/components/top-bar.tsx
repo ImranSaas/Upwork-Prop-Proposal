@@ -20,25 +20,27 @@ export function TopBar({ onNavigate, onGoBack }: TopBarProps) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 flex h-20 shrink-0 items-center gap-4 bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md px-6 mt-2 mb-4 mx-2 animate-fade-in">
+      <div className="flex items-center gap-3">
         <SidebarTrigger className="-ml-1" />
         {onGoBack && (
-          <Button variant="ghost" size="icon" onClick={onGoBack} className="hover-lift">
+          <Button variant="ghost" size="icon" onClick={onGoBack} className="hover-lift rounded-full bg-gradient-to-r from-primary/10 to-emerald-100/30 shadow-md">
             <ArrowLeft className="h-5 w-5" />
             <span className="sr-only">Go back</span>
           </Button>
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover-lift">
+      <div className="ml-auto flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover-lift rounded-full bg-gradient-to-r from-primary/10 to-emerald-100/30 shadow-md">
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
 
-        <NotificationDropdown onNavigate={onNavigate} />
+        <div className="rounded-full bg-gradient-to-r from-primary/10 to-emerald-100/30 shadow-md">
+          <NotificationDropdown onNavigate={onNavigate} />
+        </div>
       </div>
     </header>
   )

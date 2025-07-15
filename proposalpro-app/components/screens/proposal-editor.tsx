@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Send, Save, ArrowLeft, Copy, CheckCircle2 } from "lucide-react"
 import type { Screen } from "@/app/page"
 import { useToast } from "@/components/ui/use-toast"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Loader2 } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface ProposalEditorProps {
   onNavigate: (screen: Screen) => void
@@ -21,24 +26,58 @@ export function ProposalEditor({ onNavigate, onGoBack }: ProposalEditorProps) {
   const [refinedProposal, setRefinedProposal] = useState<string | null>(null)
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
+  const [tone, setTone] = useState<'Professional' | 'Friendly' | 'Confident'>('Professional')
+  const [addIntro, setAddIntro] = useState(false)
+  const [mentionPortfolio, setMentionPortfolio] = useState(false)
+  const [includeFollowUp, setIncludeFollowUp] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [activeTab, setActiveTab] = useState<'refine' | 'insights'>('refine')
+  const [refinePrompt, setRefinePrompt] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const jobDetails = {
     title: "React Developer for E-commerce Platform",
+    aiSummary: "Redesign a SaaS dashboard UI using React and Tailwind CSS. You'll implement Figma designs, ensure responsiveness, and integrate with REST APIs.",
     budget: "$5,000 - $8,000",
   }
 
-  // Mock A/B variations
-  const abVariations = [
-    proposalText,
-    proposalText.replace("Hi there!", "Hello!"),
+  // Simulate loading state on mount
+  useState(() => {
+    const delay = Math.floor(Math.random() * 2000) + 1000
+    const timeout = setTimeout(() => setIsLoading(false), delay)
+    return () => clearTimeout(timeout)
+  })
+
+  // Mock strengths, feedback, and A/B variations
+  const strengths = [
+    "Highlights direct experience with similar projects",
+    "Addresses all client requirements",
+    "Uses a professional, confident tone"
+  ]
+  const feedback = [
+    "Consider adding a question to engage the client.",
+    "Highlight your experience with similar projects more explicitly."
+  ]
+  const abIntros = [
+    "Hello! I'm excited to apply for your project.",
+    "Hi there! I believe I'm a great fit for your needs."
   ]
 
-  // Mock feedback
-  const feedback = [
-    "Strong opening and clear value proposition.",
-    "Consider adding a question to engage the client.",
-    "Highlight your experience with similar projects more explicitly.",
-  ]
+  // Handler for updating proposal with prompt
+  const handleRefine = () => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setProposalText(`[AI-refined: ${refinePrompt}]\n` + proposalText)
+      setIsLoading(false)
+      setRefinePrompt("")
+    }, 1200)
+  }
+
+  // Handler for A/B intro swap
+  const handleSwapIntro = (intro: string) => {
+    setProposalText(intro + proposalText.substring(proposalText.indexOf("\n")))
+  }
 
   // Copy to clipboard handler (with fallback)
   const handleCopy = async () => {
@@ -63,116 +102,170 @@ export function ProposalEditor({ onNavigate, onGoBack }: ProposalEditorProps) {
     setTimeout(() => setCopied(false), 3000)
   }
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header: Job Title and Budget */}
-      <div className="w-full sticky top-0 z-30 bg-background border-b border-border flex flex-col">
-        <div className="flex flex-col items-center justify-center px-4 pt-4 pb-2">
-          <span className="text-xl sm:text-2xl font-bold text-center mb-1">{jobDetails.title}</span>
-          <span className="inline-block bg-primary/10 text-primary font-semibold rounded px-3 py-1 text-sm mb-1">{jobDetails.budget}</span>
-        </div>
-        {/* Tab Switcher */}
-        <div className="flex border-b border-border bg-background">
-          <button
-            className={`flex-1 py-3 text-center font-medium transition-all duration-300 ${selectedTab === 'proposal' ? 'border-b-2 border-primary text-primary bg-accent/30' : 'text-muted-foreground'}`}
-            onClick={() => setSelectedTab('proposal')}
-          >
-            Proposal
-          </button>
-          <button
-            className={`flex-1 py-3 text-center font-medium transition-all duration-300 ${selectedTab === 'insights' ? 'border-b-2 border-primary text-primary bg-accent/30' : 'text-muted-foreground'}`}
-            onClick={() => setSelectedTab('insights')}
-          >
-            Proposal Insights
-          </button>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-muted/40 to-white dark:from-background/80 dark:to-background/60">
+        <Loader2 className="h-12 w-12 text-primary animate-spin mb-6" />
+        <div className="text-lg font-medium text-muted-foreground">Crafting your winning proposal…</div>
       </div>
+    )
+  }
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-muted/40 to-white dark:from-background/80 dark:to-background/60 flex flex-col">
+      {/* Top Section */}
+      <div className="w-full px-2 sm:px-4 pt-6 sm:pt-8 pb-3 sm:pb-4 flex flex-col items-center border-b border-border bg-background/80 sticky top-0 z-30">
+        <div className="w-full flex items-center mb-1">
+          {onGoBack && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-2"
+              onClick={onGoBack}
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <span className="text-xl sm:text-2xl font-extrabold text-primary animate-fade-in flex-1 text-center">
+            {jobDetails.title}
+          </span>
+        </div>
+        <span className="text-sm sm:text-base text-muted-foreground font-light mb-2 animate-fade-in text-center w-full">{jobDetails.aiSummary}</span>
+      </div>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full max-w-2xl mx-auto px-0 sm:px-4 pb-24">
-        {selectedTab === 'proposal' ? (
-          <div className="flex flex-col flex-1 w-full justify-end">
-            {/* Chat-like Proposal Bubble, full width */}
-            <div className="flex flex-col gap-2 px-0 py-8 w-full">
-              <div className="flex items-start gap-2 w-full">
-                <div className="flex-1 bg-background border border-primary/10 rounded-2xl p-6 shadow-sm whitespace-pre-line text-base leading-relaxed font-sans chat-bubble-proposal">
-                  {(refinedProposal || proposalText)}
+      <div className="flex-1 flex flex-col w-full px-1 sm:px-6 py-2 sm:py-8 gap-2 sm:gap-8 animate-fade-in md:w-full md:max-w-none md:mx-0">
+        {/* Mobile: Tabs for Proposal/Insights */}
+        <div className="block md:hidden w-full">
+          <Tabs defaultValue="proposal" className="w-full">
+            <TabsList className="w-full grid grid-cols-2 mb-1 rounded-xl bg-muted/60 dark:bg-muted/80">
+              <TabsTrigger value="proposal" className="text-base py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow font-semibold dark:data-[state=active]:bg-zinc-900/90 dark:data-[state=active]:text-foreground">Proposal</TabsTrigger>
+              <TabsTrigger value="insights" className="text-base py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow font-semibold dark:data-[state=active]:bg-zinc-900/90 dark:data-[state=active]:text-foreground">Insights</TabsTrigger>
+            </TabsList>
+            <TabsContent value="proposal">
+              <div className="flex flex-col items-center">
+                <div className="w-full">
+                  <div className="mb-1">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">AI-generated proposal</div>
+                  </div>
+                  <div className="w-full min-h-[180px] text-base leading-relaxed rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-border shadow p-3 whitespace-pre-line select-text text-foreground">
+                    {proposalText}
+                  </div>
+                  {/* Refine with AI input */}
+                  <div className="flex flex-col gap-2 mt-3">
+                    <input
+                      type="text"
+                      value={refinePrompt}
+                      onChange={e => setRefinePrompt(e.target.value)}
+                      className="border border-border rounded-lg px-3 py-2 text-base bg-background dark:bg-zinc-900/80 text-foreground focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-sm placeholder:text-muted-foreground"
+                      placeholder="e.g. Make it more casual"
+                      style={{ minHeight: 44 }}
+                    />
+                    <Button
+                      className="w-full mt-0.5 min-h-[44px] text-base font-semibold"
+                      onClick={handleRefine}
+                      disabled={!refinePrompt.trim()}
+                    >
+                      Update Proposal
+                    </Button>
+                  </div>
                 </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="insights">
+              <div className="w-full">
+                <div className="font-bold text-base mb-2 mt-1 text-foreground">Proposal Insights</div>
+                <div className="flex flex-col gap-3 mt-1">
+                  <div>
+                    <div className="font-semibold text-xs mb-1 text-muted-foreground">Why This Proposal Will Succeed</div>
+                    <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-0.5">
+                      {strengths.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-xs mb-1 text-muted-foreground">Real-Time Feedback</div>
+                    <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-0.5">
+                      {feedback.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+        {/* Desktop: Proposal + Sidebar */}
+        <div className="hidden md:flex flex-row w-full gap-8">
+          {/* Center: Proposal Display */}
+          <div className="flex-1 flex flex-col items-center">
+            <div className="w-full max-w-2xl">
+              <div className="mb-2">
+                <div className="text-xs font-semibold text-muted-foreground mb-1">AI-generated proposal</div>
+              </div>
+              <div className="w-full min-h-[320px] text-base leading-relaxed rounded-lg bg-white/80 dark:bg-zinc-900/90 border border-border shadow-md p-6 whitespace-pre-line select-text text-foreground">
+                {proposalText}
+              </div>
+              {/* Refine with AI input, always visible below proposal */}
+              <div className="flex flex-col gap-3 mt-6">
+                <input
+                  type="text"
+                  value={refinePrompt}
+                  onChange={e => setRefinePrompt(e.target.value)}
+                  className="border border-border rounded-lg px-3 py-2 text-base bg-background dark:bg-zinc-900/80 text-foreground focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
+                  placeholder="e.g. Make it more casual"
+                />
                 <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 h-10 w-10 p-0 mt-2"
-                  size="icon"
-                  onClick={handleCopy}
-                  aria-label="Copy proposal"
+                  className="w-full mt-1"
+                  onClick={handleRefine}
+                  disabled={!refinePrompt.trim()}
                 >
-                  <span className="relative inline-block w-5 h-5">
-                    <CheckCircle2
-                      className={`absolute inset-0 transition-all duration-300 ease-in-out ${copied ? 'opacity-100 scale-100' : 'opacity-0 scale-75'} text-green-600`}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    <Copy
-                      className={`absolute inset-0 transition-all duration-300 ease-in-out ${!copied ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                  </span>
+                  Update Proposal
                 </Button>
               </div>
             </div>
-            {/* Chat Input for follow-up prompt, full width at the bottom */}
-            <div className="sticky bottom-0 left-0 right-0 bg-background/95 pt-6 pb-2 px-0 flex flex-col gap-2 w-full border-t border-border z-10">
-              <div className="flex gap-2 w-full max-w-2xl mx-auto px-2">
-                <input
-                  type="text"
-                  value={followupPrompt}
-                  onChange={e => setFollowupPrompt(e.target.value)}
-                  className="flex-1 border rounded-full px-4 py-3 text-base bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Send a follow-up prompt to refine the proposal..."
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && followupPrompt.trim()) {
-                      setRefinedProposal((refinedProposal || proposalText) + '\n\n[Refined: ' + followupPrompt + ']')
-                      setFollowupPrompt("")
-                    }
-                  }}
-                />
+          </div>
+          {/* Right Sidebar: Only Proposal Insights */}
+          <div className="w-80 flex flex-col gap-6 justify-start items-stretch">
+            <div className="w-full">
+              <div className="font-bold text-lg mb-4 text-foreground">Proposal Insights</div>
+              <div className="flex flex-col gap-6 mt-4">
+                <div>
+                  <div className="font-semibold text-sm mb-1 text-muted-foreground">Why This Proposal Will Succeed</div>
+                  <ul className="list-disc pl-6 text-base text-muted-foreground space-y-1">
+                    {strengths.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <div className="font-semibold text-sm mb-1 text-muted-foreground">Real-Time Feedback</div>
+                  <ul className="list-disc pl-6 text-base text-muted-foreground space-y-1">
+                    {feedback.map((f, i) => <li key={i}>{f}</li>)}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        ) : (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl mx-auto px-2 py-8">
-            <div>
-              <h3 className="font-medium mb-2">Why This Proposal Will Succeed</h3>
-              <ul className="list-disc pl-6 text-base text-muted-foreground space-y-1">
-                <li>Highlights direct experience with similar projects</li>
-                <li>Addresses all client requirements</li>
-                <li>Uses a professional, confident tone</li>
-                <li>Mentions measurable results ("increased client sales by 40%")</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">Real-Time Feedback</h3>
-              <ul className="list-disc pl-6 text-base text-muted-foreground space-y-1">
-                {feedback.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">A/B Variations</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {abVariations.map((variation, idx) => (
-                  <div key={idx} className="bg-muted/50 rounded-2xl p-4">
-                    <div className="text-xs text-muted-foreground mb-2">Variation {String.fromCharCode(65 + idx)}</div>
-                    <Textarea
-                      value={variation}
-                      readOnly
-                      className="min-h-[180px] text-base leading-relaxed resize-none bg-muted/50"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
+      </div>
+      {/* Bottom Button Row: Sticky CTA, always visible, vertical on mobile */}
+      <div className="w-full sticky bottom-0 left-0 right-0 bg-background/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2 px-1 sm:px-4 py-2 sm:py-4 z-50 shadow-lg animate-fade-in transition-all">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto justify-center">
+          <Button
+            variant="secondary"
+            className="rounded-lg font-semibold shadow-md hover:shadow-lg transition-shadow w-full sm:w-auto min-h-[44px] text-base"
+            onClick={handleCopy}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            {copied ? "Copied!" : "Copy to Clipboard"}
+          </Button>
+        </div>
+        <a
+          href="https://www.upwork.com/ab/proposals/job"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline text-sm font-semibold hover:text-emerald-600 transition-colors flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto justify-center sm:justify-start min-h-[44px]"
+        >
+          <ArrowLeft className="inline h-4 w-4 mr-1" />
+          Open in Upwork
+        </a>
       </div>
     </div>
   )

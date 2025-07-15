@@ -1,11 +1,28 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "next-themes"
-import { User, Bell, CreditCard, Moon, Sun, LogOut, ChevronRight, Check } from "lucide-react"
+import {
+  User,
+  Bell,
+  CreditCard,
+  LogOut,
+  Check,
+  XCircle,
+  RefreshCw,
+  Edit2,
+  Mail,
+  Sparkles,
+  Lock,
+  HelpCircle,
+  ExternalLink,
+} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface SettingsScreenProps {
   onLogout: () => void
@@ -14,120 +31,188 @@ interface SettingsScreenProps {
 
 export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
   const { theme, setTheme } = useTheme()
-  const [notifications, setNotifications] = useState(true)
+  // Simulated user data
+  const [user, setUser] = useState({ name: "John Doe", email: "john@example.com" })
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState(user.name)
+  const [editEmail, setEditEmail] = useState(user.email)
+  // Upwork connection
+  const [upworkConnected, setUpworkConnected] = useState(true)
+  // Notification toggles
+  const [emailJobAlerts, setEmailJobAlerts] = useState(true)
+  const [aiTips, setAiTips] = useState(false)
+  // Privacy toggle
+  const [allowLearning, setAllowLearning] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
 
-  const settingsItems = [
-    {
-      id: "profile",
-      icon: User,
-      title: "Profile",
-      subtitle: "john@example.com",
-      action: "edit",
-    },
-    {
-      id: "notifications",
-      icon: Bell,
-      title: "Notifications",
-      subtitle: notifications ? "Enabled" : "Disabled",
-      action: "toggle",
-    },
-    {
-      id: "billing",
-      icon: CreditCard,
-      title: "Billing",
-      subtitle: "Pro Plan - $19.99/month",
-      action: "view",
-    },
-    {
-      id: "theme",
-      icon: theme === "dark" ? Moon : Sun,
-      title: "Dark Mode",
-      subtitle: theme === "dark" ? "Enabled" : "Disabled",
-      action: "toggle-theme",
-    },
-  ]
+  // Billing
+  const currentPlan = "$19.99/mo"
 
-  const handleItemAction = (item: any) => {
-    switch (item.action) {
-      case "toggle":
-        setNotifications(!notifications)
-        break
-      case "toggle-theme":
-        setTheme(theme === "dark" ? "light" : "dark")
-        break
-      case "view":
-        onNavigate?.("billing")
-        break
-      default:
-        break
-    }
+  // Handlers
+  const handleEditProfile = () => {
+    setUser({ name: editName, email: editEmail })
+    setEditing(false)
   }
 
   return (
-    <div className="p-4 space-y-6 content-with-nav">
-      {/* Header */}
-      <div className="space-y-2 animate-fade-in">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account preferences</p>
+    <div className="flex flex-col gap-6 sm:gap-8 p-2 sm:p-4 md:p-6 max-w-full mx-auto animate-fade-in bg-neutral-50 dark:bg-neutral-950 min-h-screen">
+      {/* Account Info */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Account Info</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl font-bold"><User className="h-5 w-5 text-green-400" /> Profile</CardTitle>
+            <CardDescription>Manage your name and email</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between py-4">
+            <div>
+              <div className="font-semibold text-lg text-foreground">{user.name}</div>
+              <div className="text-muted-foreground text-base">{user.email}</div>
       </div>
-
-      {/* Upwork Connection Status */}
-      <Card className="animate-slide-up border-green-200 dark:border-green-800">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Button size="icon" variant="outline" onClick={() => setShowEditModal(true)} aria-label="Edit profile" className="hover:bg-primary/10">
+              <Edit2 className="h-4 w-4 text-green-400" />
+            </Button>
+          </CardContent>
+        </Card>
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <input
+                className="input w-full bg-background border rounded p-2"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                placeholder="Name"
+              />
+              <input
+                className="input w-full bg-background border rounded p-2"
+                value={editEmail}
+                onChange={e => setEditEmail(e.target.value)}
+                placeholder="Email"
+              />
               </div>
-              <div>
-                <h3 className="font-medium">Upwork Connected</h3>
-                <p className="text-sm text-muted-foreground">@john_freelancer</p>
-              </div>
+            <DialogFooter className="flex gap-2 pt-2">
+              <Button onClick={handleEditProfile} className="bg-primary hover:bg-primary/90">Save</Button>
+              <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </section>
+      <Separator />
+      {/* Upwork Connection */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Upwork Connection</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><Check className="h-5 w-5 text-green-400" /> Upwork</CardTitle>
+            <CardDescription>Manage your Upwork OAuth connection</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              {upworkConnected ? (
+                <Check className="h-5 w-5 text-green-400" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-400" />
+              )}
+              <span className="font-medium text-lg text-foreground">
+                {upworkConnected ? "Connected" : "Not Connected"}
+              </span>
             </div>
+            <div className="flex gap-2">
+              {upworkConnected ? (
+                <Button size="sm" variant="outline" onClick={() => setUpworkConnected(false)} className="hover:bg-destructive/10">Disconnect</Button>
+              ) : (
+                <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => setUpworkConnected(true)}>Reconnect</Button>
+              )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Settings List */}
-      <div className="space-y-3">
-        {settingsItems.map((item, index) => {
-          const Icon = item.icon
-          return (
-            <Card
-              key={item.id}
-              className="card-interactive animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => handleItemAction(item)}
-            >
-              <CardContent className="p-4">
+      </section>
+      <Separator />
+      {/* Notifications */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Notifications</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><Bell className="h-5 w-5 text-green-400" /> Notifications</CardTitle>
+            <CardDescription>Control how you receive alerts and tips</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-6 py-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-muted rounded-lg">
-                      <Icon className="h-5 w-5 text-muted-foreground" />
+              <span className="text-base">Email me new job alerts</span>
+              <Switch checked={emailJobAlerts} onCheckedChange={setEmailJobAlerts} />
                     </div>
-                    <div>
-                      <h3 className="font-medium">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">{item.subtitle}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-base">Send me AI proposal improvement tips</span>
+              <Switch checked={aiTips} onCheckedChange={setAiTips} />
                     </div>
+          </CardContent>
+        </Card>
+      </section>
+      <Separator />
+      {/* Privacy & AI Settings */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Privacy & AI Settings</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><Lock className="h-5 w-5 text-green-400" /> Privacy & AI</CardTitle>
+            <CardDescription>Control how your data is used for personalization</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-base">Allow UpGenie to learn from my proposals to improve personalization</span>
+              <Switch checked={allowLearning} onCheckedChange={setAllowLearning} />
                   </div>
-                  {item.action.includes("toggle") ? (
-                    <Switch
-                      checked={item.action === "toggle" ? notifications : theme === "dark"}
-                      onCheckedChange={() => handleItemAction(item)}
-                    />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  )}
+            <div className="text-xs text-muted-foreground mt-2">
+              Your data is only used to help you win more jobs.
                 </div>
               </CardContent>
             </Card>
-          )
-        })}
+      </section>
+      <Separator />
+      {/* Subscription & Billing */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Subscription & Billing</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CreditCard className="h-5 w-5 text-green-400" /> Billing</CardTitle>
+            <CardDescription>Manage your plan and payment methods</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-6 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-base">Current plan</span>
+              <span className="font-semibold text-lg text-foreground">{currentPlan}</span>
       </div>
-
+          </CardContent>
+          <CardFooter className="flex gap-2">
+            <Button size="sm" className="bg-primary hover:bg-primary/90">Update Payment Method</Button>
+            <Button size="sm" variant="outline">Cancel Subscription</Button>
+          </CardFooter>
+        </Card>
+      </section>
+      <Separator />
+      {/* Help & Support */}
+      <section className="space-y-2 animate-slide-in-from-top">
+        <Badge className="bg-primary/10 text-primary border-primary/20 text-base px-4 py-2 rounded-full mb-2">Help & Support</Badge>
+        <Card className="bg-white/80 dark:bg-background/80 shadow-lg rounded-2xl border-none backdrop-blur-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><HelpCircle className="h-5 w-5 text-green-400" /> Support</CardTitle>
+            <CardDescription>Find answers or get in touch</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 py-4">
+            <a href="#" className="flex items-center gap-2 text-primary hover:underline"><ExternalLink className="h-4 w-4" /> Help Center</a>
+            <a href="#" className="flex items-center gap-2 text-primary hover:underline"><Mail className="h-4 w-4" /> Contact Support</a>
+            <a href="#" className="flex items-center gap-2 text-primary hover:underline"><ExternalLink className="h-4 w-4" /> Terms</a>
+            <a href="#" className="flex items-center gap-2 text-primary hover:underline"><ExternalLink className="h-4 w-4" /> Privacy Policy</a>
+          </CardContent>
+        </Card>
+      </section>
+      <Separator />
       {/* Sign Out */}
-      <div className="pt-4 animate-slide-up" style={{ animationDelay: "400ms" }}>
-        <Button variant="destructive" onClick={onLogout} className="w-full h-12 tap-target">
+      <div className="pt-4 animate-fade-in">
+        <Button variant="destructive" onClick={onLogout} className="w-full h-12 tap-target text-lg font-semibold rounded-xl shadow-md hover:bg-destructive/90">
           <LogOut className="h-5 w-5 mr-2" />
           Sign Out
         </Button>

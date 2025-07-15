@@ -92,3 +92,18 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes slide-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+@keyframes slide-right {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+.animate-slide-left {
+  animation: slide-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animate-slide-right {
+  animation: slide-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
