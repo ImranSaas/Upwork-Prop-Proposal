@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -171,6 +173,25 @@ export function DashboardScreen({ onNavigate, setSelectedJob }: DashboardScreenP
     return "text-gray-600 dark:text-gray-400"
   }
 
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Try to get first name from user_metadata or full_name
+        let name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+        if (name) {
+          // Use only the first part if full name
+          setFirstName(name.split(" ")[0]);
+        } else {
+          setFirstName(user.email ?? "");
+        }
+      }
+    };
+    fetchUser();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6 sm:gap-8 p-2 sm:p-4 md:p-6 max-w-full mx-auto animate-fade-in bg-neutral-50 dark:bg-neutral-950 min-h-screen">
       {/* Greeting Section */}
@@ -179,7 +200,7 @@ export function DashboardScreen({ onNavigate, setSelectedJob }: DashboardScreenP
           <div className="flex flex-col gap-1 pt-3 sm:pt-4 px-4 sm:px-8">
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight flex items-center gap-2">
               <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-primary animate-bounce" />
-              <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">Good morning Imran! 👋</span>
+              <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">Good morning {firstName ? firstName : "!"} 👋</span>
             </h1>
             <span className="text-base sm:text-lg text-muted-foreground font-light mt-1">Let's win some jobs today!</span>
           </div>

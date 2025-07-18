@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Eye, EyeOff, Check, X, ArrowLeft } from "lucide-react"
 import type { Screen } from "@/app/page"
+import { supabase } from "@/lib/supabaseClient";
 
 interface LoginScreenProps {
   onLogin: () => void
@@ -94,35 +95,60 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
       return
     }
 
-    setTimeout(() => {
+    try {
       if (isSignUp) {
-        // For signup, show Upwork connect modal
+        // Supabase sign up
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+          },
+        })
+        if (signUpError) {
+          setError(signUpError.message)
+          setLoading(false)
+          return
+        }
+        // Optionally, you can show a message to verify email
         if (onSignupWithUpworkConnect) {
           onSignupWithUpworkConnect()
         }
       } else {
-        // For signin, go directly to dashboard
+        // Supabase sign in
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (signInError) {
+          setError(signInError.message)
+          setLoading(false)
+          return
+        }
         onLogin()
       }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred")
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setLoading(true)
-    // Simulate Google OAuth
-    setTimeout(() => {
-      if (isSignUp) {
-        // For signup with Google, show Upwork connect modal
-        if (onSignupWithUpworkConnect) {
-          onSignupWithUpworkConnect()
-        }
-      } else {
-        // For signin with Google, go directly to dashboard
-        onLogin()
+    setError("")
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
       }
+      // Supabase will redirect, so no need to do anything else here
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred")
       setLoading(false)
-    }, 1500)
+    }
   }
 
   const passwordStrength = getPasswordStrength(password)

@@ -26,6 +26,8 @@ import { LandingPage } from "@/components/screens/landing-page"
 import { NotificationsScreen } from "@/components/screens/notifications-screen"
 import { JobFeedScreen } from "@/components/screens/job-feed-screen"
 import { ProposalDetailsScreen } from "@/components/screens/proposal-details-screen"
+import { supabase } from "@/lib/supabaseClient";
+import { useEffect } from "react";
 
 export type Screen =
   | "landing"
@@ -58,6 +60,42 @@ export default function Home() {
   const [showUpworkModal, setShowUpworkModal] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [selectedProposal, setSelectedProposal] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Session check on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        setIsAuthenticated(true);
+        setCurrentScreen("dashboard");
+      } else {
+        setIsAuthenticated(false);
+        setCurrentScreen("landing");
+      }
+      setCheckingSession(false);
+    };
+    checkSession();
+  }, []);
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md animate-bounce-in shadow-lg">
+          <div className="bg-white/90 dark:bg-background/90 rounded-2xl shadow-lg p-8 flex flex-col items-center gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center mb-2 animate-pulse">
+              <span className="font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">UG</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-2" />
+              <span className="text-lg font-semibold text-primary">Loading your workspace...</span>
+              <span className="text-sm text-muted-foreground">Please wait while we check your session</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleNavigate = (screen: Screen | 'crm-pipeline') => {
     // Map 'crm-pipeline' to 'pipeline' for sidebar navigation
@@ -82,7 +120,8 @@ export default function Home() {
     setNavigationHistory([])
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false)
     setCurrentScreen("landing")
     setNavigationHistory([])
