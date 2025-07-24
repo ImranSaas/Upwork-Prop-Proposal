@@ -26,12 +26,13 @@ import { LandingPage } from "@/components/screens/landing-page"
 import { NotificationsScreen } from "@/components/screens/notifications-screen"
 import { JobFeedScreen } from "@/components/screens/job-feed-screen"
 import { ProposalDetailsScreen } from "@/components/screens/proposal-details-screen"
-import { supabase } from "@/lib/supabaseClient";
-import { useEffect } from "react";
+import AccountVerificationScreen from "@/components/screens/account-verification-screen"
+import { JobPreferencesOnboarding } from "@/components/screens/job-preferences-onboarding";
 
 export type Screen =
   | "landing"
   | "login"
+  | "verification"
   | "onboarding"
   | "dashboard"
   | "job-feed"
@@ -52,53 +53,18 @@ export type Screen =
   | "upwork-connect"
   | "notifications"
   | "proposal-details"
+  | "job-preferences-onboarding";
 
 export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("landing")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [navigationHistory, setNavigationHistory] = useState<Screen[]>([])
   const [showUpworkModal, setShowUpworkModal] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [selectedProposal, setSelectedProposal] = useState(null)
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [showJobPrefsOnboarding, setShowJobPrefsOnboarding] = useState(false);
 
-  // Session check on mount
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (data?.session) {
-        setIsAuthenticated(true);
-        setCurrentScreen("dashboard");
-      } else {
-        setIsAuthenticated(false);
-        setCurrentScreen("landing");
-      }
-      setCheckingSession(false);
-    };
-    checkSession();
-  }, []);
-
-  if (checkingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800">
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md animate-bounce-in shadow-lg">
-          <div className="bg-white/90 dark:bg-background/90 rounded-2xl shadow-lg p-8 flex flex-col items-center gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center mb-2 animate-pulse">
-              <span className="font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">UG</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-2" />
-              <span className="text-lg font-semibold text-primary">Loading your workspace...</span>
-              <span className="text-sm text-muted-foreground">Please wait while we check your session</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Navigation handlers
   const handleNavigate = (screen: Screen | 'crm-pipeline') => {
-    // Map 'crm-pipeline' to 'pipeline' for sidebar navigation
     const mappedScreen: Screen = screen === 'crm-pipeline' ? 'pipeline' : screen
     setNavigationHistory((prev) => [...prev, currentScreen])
     setCurrentScreen(mappedScreen)
@@ -114,18 +80,22 @@ export default function Home() {
 
   const canGoBack = navigationHistory.length > 0
 
-  const handleLogin = () => {
-    setIsAuthenticated(true)
-    setCurrentScreen("dashboard")
+  // Dummy handlers for screens that previously required backend
+  const handleSignupSuccess = () => {
+    setCurrentScreen("verification")
     setNavigationHistory([])
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsAuthenticated(false)
-    setCurrentScreen("landing")
-    setNavigationHistory([])
-  }
+  const handleSignupShowJobPreferences = () => {
+    setShowJobPrefsOnboarding(true);
+    setCurrentScreen("job-preferences-onboarding");
+  };
+
+  const handleLogout = () => {
+    setCurrentScreen("landing");
+    setNavigationHistory([]);
+    setShowUpworkModal(false);
+  };
 
   const handleShowUpworkModal = () => {
     setShowUpworkModal(true)
@@ -135,9 +105,22 @@ export default function Home() {
     setShowUpworkModal(false)
   }
 
+  const handleChromeExtensionComplete = () => {
+    setCurrentScreen("job-preferences-onboarding");
+  };
+
+  const handleJobPrefsComplete = () => {
+    setShowJobPrefsOnboarding(false);
+    setCurrentScreen("dashboard");
+  };
+
+  const handleVerificationComplete = async () => {
+    setCurrentScreen("dashboard");
+    setNavigationHistory([]);
+  };
+
   const handleUpworkConnect = () => {
     setShowUpworkModal(false)
-    setIsAuthenticated(true)
     setCurrentScreen("dashboard")
     setNavigationHistory([])
   }
@@ -151,17 +134,35 @@ export default function Home() {
     "settings"
   ];
 
-  // Show landing page or login screen without sidebar
-  if (!isAuthenticated) {
+  // Show landing page, login screen, or verification screen without sidebar
+  if (["landing", "login", "verification"].includes(currentScreen)) {
     return (
       <div className="min-h-screen bg-background">
         {currentScreen === "landing" && <LandingPage onNavigate={handleNavigate} />}
         {currentScreen === "login" && (
-          <LoginScreen onNavigate={handleNavigate} onLogin={handleLogin} onSignupWithUpworkConnect={handleShowUpworkModal} />
+          <LoginScreen 
+            onNavigate={handleNavigate} 
+            onLogin={() => setCurrentScreen("dashboard")}
+            onSignupWithUpworkConnect={handleShowUpworkModal}
+            onSignupSuccess={handleSignupSuccess}
+            onSignupShowJobPreferences={handleSignupShowJobPreferences}
+          />
         )}
-        {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleUpworkConnect} />}
+        {currentScreen === "verification" && (
+          <AccountVerificationScreen 
+            onVerificationComplete={handleVerificationComplete}
+            onGoBack={canGoBack ? handleGoBack : undefined}
+            email={""}
+          />
+        )}
+        {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleChromeExtensionComplete} />}
       </div>
     )
+  }
+
+  // Show onboarding wizard if needed
+  if (currentScreen === "job-preferences-onboarding") {
+    return <JobPreferencesOnboarding onComplete={handleJobPrefsComplete} />;
   }
 
   // No-op handlers for required props
@@ -227,7 +228,6 @@ export default function Home() {
           </main>
         </SidebarInset>
       </div>
-      {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleUpworkConnect} />}
     </SidebarProvider>
   )
 }
