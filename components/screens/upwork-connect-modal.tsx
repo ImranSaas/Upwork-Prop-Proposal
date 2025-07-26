@@ -13,9 +13,8 @@ interface UpworkConnectModalProps {
 
 export function UpworkConnectModal({ onNavigate, onConnectAndLogin }: UpworkConnectModalProps) {
   const [isConnecting, setIsConnecting] = useState(false)
-  // Remove extensionInstalled state and any related logic
 
-  const handleUpworkConnect = async () => {
+  const handleUpworkConnect = () => {
     setIsConnecting(true)
     // Simulate OAuth flow
     setTimeout(() => {

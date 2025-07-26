@@ -24,12 +24,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { supabase } from "@/lib/supabaseClient"
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface SettingsScreenProps {
-  onLogout: () => void | Promise<void>
+  onLogout: () => void
   onNavigate?: (screen: string) => void
 }
 
@@ -115,48 +116,67 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
   const [loadingPreferences, setLoadingPreferences] = useState(true);
 
   const [keywords, setKeywords] = useState<string[]>([]); // No default keywords
+  const [budgetType, setBudgetType] = useState<"hourly" | "fixed">("hourly");
   const [hourlyMin, setHourlyMin] = useState<string>("");
+  const [hourlyMax, setHourlyMax] = useState<number | "">("");
   const [fixedMin, setFixedMin] = useState<string>("");
+  const [fixedMax, setFixedMax] = useState<number | "">("");
   const [experience, setExperience] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [clientVerified, setClientVerified] = useState(false);
   const [minClientSpend, setMinClientSpend] = useState<string>("");
   const [minClientRating, setMinClientRating] = useState<string>("");
+  const [minClientHireRate, setMinClientHireRate] = useState<string>("");
+  const clientHireRateOptions = [
+    { label: "Any", value: "" },
+    { label: "50%+", value: "50" },
+    { label: "70%+", value: "70" },
+    { label: "90%+", value: "90" },
+    { label: "100%", value: "100" },
+  ];
 
-
+  const jobCategories = [
+    "Web Development", "Design", "Sales & Marketing", "Writing", "AI", "Mobile Apps", "Data Science", "Admin Support"
+  ];
   const experienceLevels = ["Entry", "Intermediate", "Expert"];
 
   const keywordSuggestions = [
     "React", "Copywriting", "AI", "Shopify", "Figma", "UX Design", "Web Development", "SEO", "Branding", "Python", "Data Analysis", "Marketing", "Content Writing", "Project Management", "WordPress", "Mobile Apps"
   ];
 
-  const minClientSpendLabel = (value: string) => {
-    switch (value) {
-      case "100": return "$0 - $100";
-      case "200": return "$100 - $200";
-      case "500": return "$200 - $500";
-      case "1000": return "$500 - $1,000";
-      case "10000": return "$1,000 - $10,000";
-      case "10001": return "$10,000+";
-      default: return "Any";
-    }
-  };
-
   useEffect(() => {
-    // Mock user data
-    setUser({ name: "John Doe", email: "john.doe@example.com" });
-    setEditName("John Doe");
-    setEditEmail("john.doe@example.com");
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const name = user.user_metadata?.full_name || user.user_metadata?.name || "";
+        setUser({ name: name ?? '', email: user.email ?? '' });
+        setEditName(name ?? '');
+        setEditEmail(user.email ?? '');
 
-    // Mock preferences
-    setKeywords(["React", "Copywriting", "AI"]);
-    setHourlyMin("50");
-    setFixedMin("500");
-    setExperience(["Intermediate"]);
-    setClientVerified(true);
-    setMinClientSpend("1000");
-    setMinClientRating("4.0");
-
-    setLoadingPreferences(false);
+        // Fetch job alert preferences
+        const { data: prefs, error } = await supabase
+          .from("job_alert_preferences")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+        if (prefs) {
+          setKeywords(prefs.keywords ? prefs.keywords.split(",") : []);
+          setBudgetType(prefs.budget_type || "hourly");
+          setHourlyMin(prefs.hourly_min !== null && prefs.hourly_min !== undefined ? String(prefs.hourly_min) : "");
+          setFixedMin(prefs.fixed_min !== null && prefs.fixed_min !== undefined ? String(prefs.fixed_min) : "");
+          setExperience(prefs.experience_levels ? prefs.experience_levels.split(",") : []);
+          setCategories(prefs.categories ? prefs.categories.split(",") : []);
+          setClientVerified(!!prefs.client_verified);
+          setMinClientSpend(prefs.min_client_spend !== null && prefs.min_client_spend !== undefined ? String(prefs.min_client_spend) : "");
+          setMinClientRating(prefs.min_client_rating !== null && prefs.min_client_rating !== undefined ? String(prefs.min_client_rating) : "");
+          setMinClientHireRate(prefs.min_client_hire_rate !== null && prefs.min_client_hire_rate !== undefined ? String(prefs.min_client_hire_rate) : "");
+        }
+        setLoadingPreferences(false);
+      } else {
+        setLoadingPreferences(false);
+      }
+    };
+    fetchUser();
   }, []);
 
   // Billing
@@ -173,19 +193,39 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
     setSaveError(null);
     setSaveSuccess(false);
 
-    // Mock save logic
-    console.log('Saving preferences with values:', {
-      hourlyMin,
-      fixedMin,
-      hourlyMinType: typeof hourlyMin,
-      fixedMinType: typeof fixedMin
-    });
+    // 1. Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      setSaveError("Could not get user info.");
+      setSaving(false);
+      return;
+    }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 2. Prepare the data
+    const preferences = {
+      user_id: user.id,
+      keywords: Array.isArray(keywords) ? keywords.join(",") : keywords, // store as comma-separated string
+      budget_type: budgetType,
+      hourly_min: budgetType === "hourly" ? Number(hourlyMin) || null : null,
+      fixed_min: budgetType === "fixed" ? Number(fixedMin) || null : null,
+      experience_levels: Array.isArray(experience) ? experience.join(",") : experience,
+      categories: Array.isArray(categories) ? categories.join(",") : categories,
+      client_verified: clientVerified,
+      min_client_spend: minClientSpend ? Number(minClientSpend) : null,
+      min_client_rating: minClientRating ? Number(minClientRating) : null,
+      min_client_hire_rate: minClientHireRate ? Number(minClientHireRate) : null,
+    };
 
-    setSaveSuccess(true);
-    setSaveError(null);
+    // 3. Upsert (insert or update) the preferences
+    const { error } = await supabase
+      .from("job_alert_preferences")
+      .upsert([preferences], { onConflict: "user_id" }); // onConflict ensures one row per user
+
+    if (error) {
+      setSaveError("Failed to save preferences: " + error.message);
+    } else {
+      setSaveSuccess(true);
+    }
     setSaving(false);
   };
 
@@ -386,60 +426,53 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
               <p className="text-xs text-muted-foreground ml-1">Used to match job titles and descriptions</p>
             </div>
             {/* Budget Type & Range */}
-            <div className="bg-muted/60 rounded-xl p-6 space-y-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Minimum Budget Requirements</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Hourly Rate Input */}
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2 text-foreground">Minimum Hourly Rate</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">$</span>
+            <div className="bg-muted/60 rounded-xl p-4 flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-6 sm:items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold mb-1">Budget Type</label>
+                  <RadioGroup value={budgetType} onValueChange={v => setBudgetType(v as "hourly" | "fixed")}
+                    className="flex gap-6 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <RadioGroupItem value="hourly" id="hourly" />
+                      <span className="text-sm">Hourly</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <RadioGroupItem value="fixed" id="fixed" />
+                      <span className="text-sm">Fixed Price</span>
+                    </label>
+                  </RadioGroup>
                 </div>
+                {budgetType === "hourly" ? (
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold mb-1">Min Hourly Rate</label>
                     <Input
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       min={0}
-                      placeholder="50"
+                      placeholder="$ / hr e.g. 50"
                       value={hourlyMin}
                       onChange={e => setHourlyMin(e.target.value)}
-                      className="pl-7 pr-12 h-11 text-base font-medium rounded-lg border-primary/20 focus:border-primary bg-white dark:bg-zinc-900 shadow-sm"
+                      className="rounded-lg border border-primary/20 focus:border-primary"
                     />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">/hr</span>
-                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">Set your minimum hourly rate for job alerts</p>
-                </div>
-
-                {/* Fixed Price Input */}
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2 text-foreground">Minimum Fixed Price</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">$</span>
-                    </div>
+                ) : (
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold mb-1">Min Fixed Price</label>
                     <Input
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       min={0}
-                      placeholder="500"
+                      placeholder="$ e.g. 500"
                       value={fixedMin}
                       onChange={e => setFixedMin(e.target.value)}
-                      className="pl-7 pr-4 h-11 text-base font-medium rounded-lg border-primary/20 focus:border-primary bg-white dark:bg-zinc-900 shadow-sm"
+                      className="rounded-lg border border-primary/20 focus:border-primary"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">Set your minimum project budget for job alerts</p>
-                </div>
+                )}
               </div>
-
-              <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-primary font-medium">Tip:</span> Setting appropriate minimums helps filter out jobs that don't match your rate requirements
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground ml-1 mt-1">Set your preferred price range for jobs</p>
             </div>
             {/* Experience Level */}
             <div className="space-y-1">
@@ -455,6 +488,16 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
                 ))}
               </div>
             </div>
+            {/* Job Categories */}
+            <div className="space-y-1">
+              <TagInput
+                label="Job Categories"
+                placeholder='e.g. "Web Development", "Design"'
+                value={categories}
+                setValue={setCategories}
+              />
+              <p className="text-xs text-muted-foreground ml-1">Choose categories to focus your job alerts</p>
+            </div>
             {/* Client Requirements */}
             <div className="bg-muted/60 rounded-xl p-4 space-y-4">
               <label className="block text-sm font-semibold mb-1">Client Requirements</label>
@@ -463,22 +506,18 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
                   <Checkbox checked={clientVerified} onCheckedChange={checked => setClientVerified(!!checked)} />
                   Verified Payment Only
                 </label>
-                {/* In the Client Requirements section, update the minimum client spend dropdown to match the rounded-full style of the client rating dropdown, and remove the badge. */}
                 <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
                   <span className="text-sm font-medium">Minimum client spend</span>
-                  <select
-                    className="w-32 rounded-full border border-primary/20 focus:border-primary bg-white dark:bg-background px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition hover:bg-primary/5 appearance-none cursor-pointer"
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    min={0}
+                    placeholder="$ e.g. 1000"
+                    className="w-28 rounded-md border border-primary/20 focus:border-primary"
                     value={minClientSpend}
                     onChange={e => setMinClientSpend(e.target.value)}
-                  >
-                    <option value="">Any</option>
-                    <option value="100">$0 - $100</option>
-                    <option value="200">$100 - $200</option>
-                    <option value="500">$200 - $500</option>
-                    <option value="1000">$500 - $1,000</option>
-                    <option value="10000">$1,000 - $10,000</option>
-                    <option value="10001">$10,000+</option>
-                  </select>
+                  />
                 </div>
                 <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
                   <span className="text-sm font-medium">Minimum client rating</span>
@@ -491,6 +530,18 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
                     <option value="3.0">3.0+</option>
                     <option value="4.0">4.0+</option>
                     <option value="4.5">4.5+</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
+                  <span className="text-sm font-medium">Minimum client hire rate</span>
+                  <select
+                    className="w-28 rounded-full border border-primary/30 bg-white dark:bg-background px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition hover:bg-primary/5 appearance-none cursor-pointer"
+                    value={minClientHireRate}
+                    onChange={e => setMinClientHireRate(e.target.value)}
+                  >
+                    {clientHireRateOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>

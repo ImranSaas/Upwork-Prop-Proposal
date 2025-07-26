@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -176,14 +177,17 @@ export function DashboardScreen({ onNavigate, setSelectedJob }: DashboardScreenP
 
   useEffect(() => {
     const fetchUser = async () => {
-      // Try to get first name from user_metadata or full_name
-      // let name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
-      // if (name) {
-      //   // Use only the first part if full name
-      //   setFirstName(name.split(" ")[0]);
-      // } else {
-      //   setFirstName(user.email ?? "");
-      // }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Try to get first name from user_metadata or full_name
+        let name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+        if (name) {
+          // Use only the first part if full name
+          setFirstName(name.split(" ")[0]);
+        } else {
+          setFirstName(user.email ?? "");
+        }
+      }
     };
     fetchUser();
   }, []);
