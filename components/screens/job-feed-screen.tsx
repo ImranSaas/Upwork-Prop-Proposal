@@ -21,59 +21,21 @@ import {
   Users,
   Calendar,
   Sparkles,
-  Loader2,
 } from "lucide-react"
 import type { Screen } from "@/app/page"
 import { useToast } from "@/components/ui/use-toast"
-import { useIsMobile } from "@/components/ui/use-mobile"
-import { JobCard } from "@/components/ui/job-card"
-
-interface Job {
-  id: number;
-  matchScore: number;
-  title: string;
-  highlights: string;
-  description: string;
-  aiSummary: string;
-  howToApply: string | null;
-  budget: string;
-  budgetType: string;
-  client: {
-    name: string;
-    location: string;
-    rating: number;
-    reviewCount: number;
-    totalSpent: string;
-    verified: boolean;
-    memberSince: string;
-  };
-  skills: string[];
-  proposals: number;
-  timePosted: string;
-  duration: string;
-  experienceLevel: string;
-  category: string;
-  featured: boolean;
-  urgent: boolean;
-  connectsRequired: number;
-  isUnread: boolean;
-  deliveryDate: string | null;
-}
 
 interface JobFeedScreenProps {
   onNavigate: (screen: Screen) => void
-  setSelectedJob: (job: any) => void
 }
 
-export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps) {
+export function JobFeedScreen({ onNavigate }: JobFeedScreenProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedBudget, setSelectedBudget] = useState("all")
   const [selectedExperience, setSelectedExperience] = useState("all")
   const [savedJobs, setSavedJobs] = useState<number[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [displayedJobs, setDisplayedJobs] = useState(5)
-  const [jobs, setJobs] = useState<Job[]>([
+  const [jobs, setJobs] = useState([
     {
       id: 1,
       matchScore: 95,
@@ -103,7 +65,7 @@ export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps
       urgent: false,
       connectsRequired: 6,
       isUnread: true,
-      deliveryDate: null as string | null,
+      deliveryDate: null,
     },
     {
       id: 2,
@@ -112,7 +74,7 @@ export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps
       highlights: "Develop a 2D web-based animated car delivery game for an event stand. Engage attendees with a simple, offline-enabled tablet game.",
       description: `I have a potential project to develop a 2D based, tablet game for use on an event stand to engage attendees.\n\nThe delivery date is 1st October 2025.\n\nLonger description:\nWe're looking for ways to engage people on the stand, and one idea that they're keen to explore is a relatively simple online game that people can play on tablets on the exhibition stand. It would be more as a way of engaging guests and helping people to really understand and remember the key selling points of the vehicles.\n\nOur working idea for the game is that it'd be based around navigating city streets, aiming to make as many deliveries as possible in a fixed time e.g. 2 minutes.\n\nIt would need to be fully animated and offline enabled for tablet use.\n\nCurrently we are are looking for a ballpark cost to guide the client and set expectations.`,
       aiSummary: "Create a simple, animated 2D car delivery game for tablets, designed to engage event attendees. The game should work offline, focus on city navigation and deliveries, and be ready by October 1, 2025.",
-      howToApply: null as string | null,
+      howToApply: null,
       budget: "$3,000 - $6,000",
       budgetType: "Fixed price",
       client: {
@@ -136,13 +98,9 @@ export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps
       isUnread: true,
       deliveryDate: "1st October 2025",
     },
-  ].map((job, idx) => ({
-    ...job,
-    isUnread: idx < 2 // Only first two jobs are unread
-  })))
+  ])
 
   const { toast } = useToast()
-  const isMobile = useIsMobile()
 
   const toggleSaveJob = (jobId: number) => {
     setSavedJobs((prev) => {
@@ -180,14 +138,12 @@ export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps
     return matchesSearch && matchesCategory
   })
 
-  const jobsToShow = filteredJobs.slice(0, displayedJobs)
-
   const loadMoreJobs = async () => {
     setIsLoading(true)
     const delay = Math.floor(Math.random() * 2000) + 2000
     await new Promise(resolve => setTimeout(resolve, delay))
     const nextId = jobs.length + 1
-    const newJobs: Job[] = Array.from({ length: 5 }).map((_, i) => {
+    const newJobs = Array.from({ length: 5 }).map((_, i) => {
       const title = `New Job ${nextId + i}`
       const description = "This is a newly loaded job. The project is looking for a skilled developer."
       return {
@@ -222,56 +178,229 @@ export function JobFeedScreen({ onNavigate, setSelectedJob }: JobFeedScreenProps
         deliveryDate: null,
       }
     })
-    setJobs((prev: Job[]) => [...prev, ...newJobs])
+    setJobs(prev => [...prev, ...newJobs])
     setDisplayedJobs(prev => prev + 5)
     setIsLoading(false)
   }
 
   return (
-    <div className={`flex flex-col gap-6 sm:gap-8 p-2 sm:p-4 md:p-6 max-w-full mx-auto animate-fade-in bg-neutral-50 dark:bg-neutral-950 min-h-screen`}>
-      {/* Header Section */}
-      <div className={isMobile ? "animate-fade-in mb-3" : "animate-fade-in mb-6"}>
-        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl sm:text-4xl'} font-extrabold tracking-tight flex items-center gap-2`}>
-          <Sparkles className={`${isMobile ? 'h-5 w-5' : 'h-7 w-7'} text-primary animate-bounce`} />
-          <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">Job Feed</span>
-        </h1>
-        <span className={`${isMobile ? 'text-base' : 'text-lg'} text-muted-foreground font-light mt-1`}>Browse the latest jobs curated for you</span>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4">
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-2xl font-semibold">Job Feed</h1>
+            <p className="text-muted-foreground">Discover opportunities that match your skills</p>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search for jobs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="web">Web Development</SelectItem>
+                  <SelectItem value="mobile">Mobile Development</SelectItem>
+                  <SelectItem value="data">Data Science</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Results Header */}
-      <div className={`flex items-center justify-between pt-2 ${isMobile ? 'text-xs' : ''}`}>
-        <p className="text-sm text-muted-foreground">{jobs.length} jobs found</p>
-        {/* No sort/filter controls for a cleaner look */}
-      </div>
+      <div className="p-4 space-y-4 pb-20">
+        {/* Results Header */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">{filteredJobs.length} jobs found</p>
+          <Select defaultValue="newest">
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="budget">Budget</SelectItem>
+              <SelectItem value="proposals">Proposals</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Job Cards */}
-      <div className="flex flex-col items-center w-full gap-6 sm:gap-8">
-        {jobs.slice(0, displayedJobs).map((job, index) => (
-          <JobCard
-            key={job.id}
-            job={job}
-            index={index}
-            onProposal={() => onNavigate("proposal-editor")}
-            isMobile={isMobile}
-            onClick={(job) => { setSelectedJob(job); onNavigate("job-details"); }}
-          />
-        ))}
-      </div>
+        {/* Job Cards */}
+        <div className="space-y-4">
+          {filteredJobs.map((job, index) => (
+            <Card
+              key={job.id}
+              className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
+                job.featured ? "border-primary/50 bg-primary/5" : ""
+              }`}
+              onClick={() => onNavigate("job-details")}
+            >
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* Job Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {job.featured && (
+                          <Badge className="bg-primary/20 text-primary border-primary/30">
+                            <Star className="h-3 w-3 mr-1" />
+                            Featured
+                          </Badge>
+                        )}
+                        {job.urgent && (
+                          <Badge className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Urgent
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2 hover:text-primary transition-colors">{job.title}</h3>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="font-medium">{job.budget}</span>
+                          <span>({job.budgetType})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{job.duration}</span>
+                        </div>
+                        <Badge className={getExperienceBadgeColor(job.experienceLevel)}>{job.experienceLevel}</Badge>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleSaveJob(job.id)
+                      }}
+                      className="text-muted-foreground hover:text-primary"
+                    >
+                      <Heart className={`h-5 w-5 ${savedJobs.includes(job.id) ? "fill-current text-red-500" : ""}`} />
+                    </Button>
+                  </div>
 
-      {/* Load More */}
-      <div className="text-center pt-6">
-        <Button variant="outline" className={`w-full sm:w-auto rounded-xl animate-fade-in ${isMobile ? 'text-base py-2' : ''}`} onClick={loadMoreJobs} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              Load More Jobs
-            </>
-          )}
-        </Button>
+                  {/* AI Summary */}
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-primary mb-1">AI Job Summary</p>
+                        <p className="text-sm leading-relaxed">{job.aiSummary}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Job Description */}
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{job.description}</p>
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap gap-2">
+                    {job.skills.map((skill, skillIndex) => (
+                      <Badge key={skillIndex} variant="secondary" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  {/* Client Info and Actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {/* Client Info */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                          {/* Removed client name */}
+                        </div>
+                        {job.client && (
+                        <div>
+                          <div className="flex items-center gap-1">
+                              {/* Removed client name */}
+                            {job.client.verified && <Verified className="h-3 w-3 text-blue-500" />}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>{job.client.location}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              <span>{job.client.rating}</span>
+                              <span>({job.client.reviewCount})</span>
+                            </div>
+                            <span>{job.client.totalSpent} spent</span>
+                          </div>
+                        </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Job Stats and Actions */}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span>{(() => {
+                            if (job.proposals < 5) return 'Less than 5';
+                            if (job.proposals < 10) return '5 to 10';
+                            if (job.proposals < 15) return '10 to 15';
+                            if (job.proposals < 50) return '20 to 50';
+                            return '50+';
+                          })()}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{job.timePosted}</span>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onNavigate("proposal-editor")
+                        }}
+                        className="hover-lift"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Generate Proposal
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Connects Required */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                    <span>Connects required: {job.connectsRequired}</span>
+                    <span>Member since {job.client.memberSince}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Load More */}
+        <div className="text-center pt-6">
+          <Button variant="outline" className="w-full sm:w-auto">
+            Load More Jobs
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -25,9 +25,12 @@ import { ApiErrorScreen } from "@/components/screens/api-error-screen"
 import { LandingPage } from "@/components/screens/landing-page"
 import { NotificationsScreen } from "@/components/screens/notifications-screen"
 import { JobFeedScreen } from "@/components/screens/job-feed-screen"
+<<<<<<< HEAD:app/page.tsx
 import { ProposalDetailsScreen } from "@/components/screens/proposal-details-screen"
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect } from "react";
+=======
+>>>>>>> parent of a9def25 (Project Added):proposalpro-app/app/page.tsx
 
 export type Screen =
   | "landing"
@@ -51,7 +54,6 @@ export type Screen =
   | "api-error"
   | "upwork-connect"
   | "notifications"
-  | "proposal-details"
 
 export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("landing")
@@ -59,6 +61,7 @@ export default function Home() {
   const [navigationHistory, setNavigationHistory] = useState<Screen[]>([])
   const [showUpworkModal, setShowUpworkModal] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
+<<<<<<< HEAD:app/page.tsx
   const [selectedProposal, setSelectedProposal] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true);
 
@@ -96,12 +99,12 @@ export default function Home() {
       </div>
     );
   }
+=======
+>>>>>>> parent of a9def25 (Project Added):proposalpro-app/app/page.tsx
 
-  const handleNavigate = (screen: Screen | 'crm-pipeline') => {
-    // Map 'crm-pipeline' to 'pipeline' for sidebar navigation
-    const mappedScreen: Screen = screen === 'crm-pipeline' ? 'pipeline' : screen
+  const handleNavigate = (screen: Screen) => {
     setNavigationHistory((prev) => [...prev, currentScreen])
-    setCurrentScreen(mappedScreen)
+    setCurrentScreen(screen)
   }
 
   const handleGoBack = () => {
@@ -142,15 +145,6 @@ export default function Home() {
     setNavigationHistory([])
   }
 
-  // Screens accessible from the sidebar
-  const sidebarScreens: Screen[] = [
-    "dashboard",
-    "job-alerts",
-    "job-feed",
-    "pipeline",
-    "settings"
-  ];
-
   // Show landing page or login screen without sidebar
   if (!isAuthenticated) {
     return (
@@ -170,27 +164,27 @@ export default function Home() {
   const renderScreen = () => {
     switch (currentScreen) {
       case "dashboard":
-        return <DashboardScreen onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
+        return <DashboardScreen onNavigate={handleNavigate} />
       case "proposals":
         return <ProposalDashboard onNavigate={handleNavigate} />
       case "proposal-editor":
-        return <ProposalEditor onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
+        return <ProposalEditor onNavigate={handleNavigate} />
       case "proposal-success":
         return <ProposalSuccessModal onNavigate={handleNavigate} onClose={noop} />
       case "job-alerts":
         return <JobAlertsDashboard onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
       case "job-details":
-        return <JobDetailsScreen job={selectedJob} onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
+        return <JobDetailsScreen job={selectedJob} onNavigate={handleNavigate} onGoBack={canGoBack ? handleGoBack : undefined} />
       case "job-alert-settings":
         return <JobAlertSettingsModal onClose={noop} onSave={noop} />
       case "pipeline":
-        return <PipelineDashboard onNavigate={handleNavigate} setSelectedProposal={setSelectedProposal} />
+        return <PipelineDashboard onNavigate={handleNavigate} />
       case "messaging":
-        return <ClientMessaging onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
+        return <ClientMessaging onNavigate={handleNavigate} />
       case "pipeline-reminder":
         return <PipelineReminderModal onClose={noop} onNavigate={handleNavigate} />
       case "billing":
-        return <BillingScreen onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
+        return <BillingScreen onGoBack={noop} />
       case "settings":
         return <SettingsScreen onLogout={handleLogout} />
       case "help":
@@ -202,15 +196,11 @@ export default function Home() {
       case "onboarding":
         return <OnboardingWizard onComplete={noop} />
       case "notifications":
-        return <NotificationsScreen onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
+        return <NotificationsScreen onNavigate={handleNavigate} onGoBack={canGoBack ? handleGoBack : undefined} />
       case "job-feed":
-        return <JobFeedScreen onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
-      case "proposal-details":
-        return selectedProposal ? (
-          <ProposalDetailsScreen proposal={selectedProposal} onGoBack={canGoBack ? handleGoBack : undefined} />
-        ) : null
+        return <JobFeedScreen onNavigate={handleNavigate} />
       default:
-        return <DashboardScreen onNavigate={handleNavigate} setSelectedJob={() => {}} />
+        return <DashboardScreen onNavigate={handleNavigate} />
     }
   }
 
@@ -219,10 +209,8 @@ export default function Home() {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar currentScreen={currentScreen} onNavigate={handleNavigate} />
         <SidebarInset className="flex-1">
-          <TopBar 
-            onNavigate={handleNavigate}
-          />
-          <main className="flex-1 overflow-auto relative">
+          <TopBar onNavigate={handleNavigate} />
+          <main className="flex-1 overflow-auto">
             <div className="container mx-auto">{renderScreen()}</div>
           </main>
         </SidebarInset>

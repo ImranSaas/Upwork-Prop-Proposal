@@ -24,7 +24,8 @@ export function SidebarNavigation({ currentScreen, onNavigate }: SidebarNavigati
   const navItems = [
     { id: "dashboard" as Screen, icon: Home, label: "Home", badge: null },
     { id: "job-alerts" as Screen, icon: Briefcase, label: "Jobs", badge: 3 },
-    { id: "crm-pipeline" as Screen, icon: Briefcase, label: "CRM Pipeline", badge: null },
+    { id: "proposals" as Screen, icon: FileText, label: "Proposals", badge: null },
+    { id: "messaging" as Screen, icon: MessageSquare, label: "Messages", badge: 1 },
     { id: "settings" as Screen, icon: Settings, label: "Settings", badge: null },
   ]
 

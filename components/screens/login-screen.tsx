@@ -30,7 +30,6 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [fullName, setFullName] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -62,11 +61,6 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
     setError("")
 
     // Validate email
-    if (isSignUp && !fullName) {
-      setError("Please enter your full name")
-      setLoading(false)
-      return
-    }
     if (!email) {
       setError("Please enter your email address")
       setLoading(false)
@@ -151,53 +145,55 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
     }
   }
 
+  const handleAppleSignIn = () => {
+    setLoading(true)
+    // Simulate Apple OAuth
+    setTimeout(() => {
+      if (isSignUp) {
+        // For signup with Apple, show Upwork connect modal
+        if (onSignupWithUpworkConnect) {
+          onSignupWithUpworkConnect()
+        }
+      } else {
+        // For signin with Apple, go directly to dashboard
+        onLogin()
+      }
+      setLoading(false)
+    }, 1500)
+  }
+
   const passwordStrength = getPasswordStrength(password)
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 bg-gradient-to-br from-primary/5 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800">
       {/* Back Button */}
       {onGoBack && (
-        <Button variant="ghost" size="icon" onClick={onGoBack} className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 hover-lift">
+        <Button variant="ghost" size="icon" onClick={onGoBack} className="fixed top-4 left-4 z-50 hover-lift">
           <ArrowLeft className="h-5 w-5" />
           <span className="sr-only">Go back</span>
         </Button>
       )}
 
-      <Card className="w-full max-w-sm sm:max-w-md animate-bounce-in shadow-lg">
+      <Card className="w-full max-w-md animate-bounce-in">
         <CardHeader className="text-center">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <span className="font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">UG</span>
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="font-extrabold text-3xl md:text-4xl text-white">UG</span>
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardTitle className="text-2xl font-bold">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+          <CardDescription>
             {isSignUp ? "Start generating winning proposals today" : "Sign in to your UpGenie account"}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-3 sm:space-y-4">
+        <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive" className="animate-slide-in-from-top">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            {/* Full Name Field for Sign Up */}
-            {isSignUp && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Your full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-11 sm:h-12"
-                  required={isSignUp}
-                />
-              </div>
-            )}
-            <div className="space-y-1.5 sm:space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -205,12 +201,12 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-11 sm:h-12"
+                className="h-12"
                 required
               />
             </div>
 
-            <div className="space-y-1.5 sm:space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
@@ -219,14 +215,14 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
                   placeholder={isSignUp ? "Create a strong password" : "Enter your password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 sm:h-12 pr-10"
+                  className="h-12 pr-10"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-11 sm:h-12 w-11 sm:w-12 hover-lift"
+                  className="absolute right-0 top-0 h-12 w-12 hover-lift"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -235,9 +231,9 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
 
               {/* Password Strength Indicator for Sign Up */}
               {isSignUp && password && (
-                <div className="space-y-2 mt-2 sm:space-y-3 sm:mt-3">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="space-y-3 mt-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
                       <span>Password strength</span>
                       <span
                         className={`font-medium ${passwordStrength.score >= 80 ? "text-green-600" : passwordStrength.score >= 40 ? "text-yellow-600" : "text-red-600"}`}
@@ -245,7 +241,7 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
                         {passwordStrength.label}
                       </span>
                     </div>
-                    <Progress value={passwordStrength.score} className="h-1.5 sm:h-2">
+                    <Progress value={passwordStrength.score} className="h-2">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`}
                         style={{ width: `${passwordStrength.score}%` }}
@@ -254,13 +250,13 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
                   </div>
 
                   {/* Password Requirements */}
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Password must contain:</p>
-                    <div className="space-y-0.5 sm:space-y-1">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Password must contain:</p>
+                    <div className="space-y-1">
                       {passwordRequirements.map((requirement, index) => {
                         const isValid = requirement.test(password)
                         return (
-                          <div key={index} className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                          <div key={index} className="flex items-center gap-2 text-sm">
                             {isValid ? (
                               <Check className="h-4 w-4 text-green-600" />
                             ) : (
@@ -280,7 +276,7 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
 
             <Button
               type="submit"
-              className="w-full h-11 sm:h-12 text-base sm:text-lg font-medium bg-primary hover:bg-primary/90 hover-lift"
+              className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90 hover-lift"
               disabled={loading || (isSignUp && !isPasswordValid())}
             >
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
@@ -291,7 +287,7 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-[10px] sm:text-xs uppercase">
+            <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
@@ -299,7 +295,7 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
           {/* Google Sign-In */}
           <Button
             variant="outline"
-            className="w-full h-11 sm:h-12 text-base sm:text-lg font-medium hover-lift"
+            className="w-full h-12 text-base font-medium hover-lift"
             onClick={handleGoogleSignIn}
             disabled={loading}
           >
@@ -324,17 +320,30 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
             Continue with Google
           </Button>
 
-          <div className="text-center space-y-1.5 sm:space-y-2">
+          {/* Apple Sign-In */}
+          <Button
+            variant="outline"
+            className="w-full h-12 text-base font-medium hover-lift"
+            onClick={handleAppleSignIn}
+            disabled={loading}
+          >
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+            </svg>
+            Continue with Apple
+          </Button>
+
+          <div className="text-center space-y-2">
             <Button
               variant="link"
-              className="text-xs sm:text-sm text-muted-foreground hover:text-primary"
+              className="text-sm text-muted-foreground hover:text-primary"
               onClick={() => setIsSignUp(!isSignUp)}
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </Button>
 
             {!isSignUp && (
-              <Button variant="link" className="text-xs sm:text-sm text-muted-foreground hover:text-primary">
+              <Button variant="link" className="text-sm text-muted-foreground hover:text-primary">
                 Forgot your password?
               </Button>
             )}
