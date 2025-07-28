@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopBar } from "@/components/top-bar"
@@ -28,6 +28,7 @@ import { JobFeedScreen } from "@/components/screens/job-feed-screen"
 import { ProposalDetailsScreen } from "@/components/screens/proposal-details-screen"
 import AccountVerificationScreen from "@/components/screens/account-verification-screen"
 import { JobPreferencesOnboarding } from "@/components/screens/job-preferences-onboarding";
+import { supabase } from "@/lib/supabaseClient";
 
 export type Screen =
   | "landing"
@@ -63,6 +64,28 @@ export default function Home() {
   const [selectedProposal, setSelectedProposal] = useState(null)
   const [showJobPrefsOnboarding, setShowJobPrefsOnboarding] = useState(false);
 
+  useEffect(() => {
+    // Check for an active session on mount (including after OAuth redirect)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setCurrentScreen("dashboard");
+      }
+    });
+
+    // Listen for auth state changes (e.g. login, logout)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setCurrentScreen("dashboard");
+      } else {
+        setCurrentScreen("landing");
+      }
+    });
+
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
   // Navigation handlers
   const handleNavigate = (screen: Screen | 'crm-pipeline') => {
     const mappedScreen: Screen = screen === 'crm-pipeline' ? 'pipeline' : screen
@@ -91,10 +114,19 @@ export default function Home() {
     setCurrentScreen("job-preferences-onboarding");
   };
 
-  const handleLogout = () => {
-    setCurrentScreen("landing");
-    setNavigationHistory([]);
-    setShowUpworkModal(false);
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error.message);
+        return;
+      }
+      setCurrentScreen("landing");
+      setNavigationHistory([]);
+      setShowUpworkModal(false);
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
   };
 
   const handleShowUpworkModal = () => {

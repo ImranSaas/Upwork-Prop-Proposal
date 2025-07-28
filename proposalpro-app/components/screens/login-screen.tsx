@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Eye, EyeOff, Check, X, ArrowLeft } from "lucide-react"
 import type { Screen } from "@/app/page"
+import { supabase } from "@/lib/supabaseClient"
 
 interface LoginScreenProps {
   onLogin: () => void
@@ -99,9 +100,16 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
     try {
       if (isSignUp) {
         // Supabase sign up
-        // Placeholder for Supabase sign up logic
-        // In a real app, you would call supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
-        // For now, just simulate success
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } },
+        });
+        if (signUpError) {
+          setError(signUpError.message);
+          setLoading(false);
+          return;
+        }
         if (onSignupSuccess) {
           onSignupSuccess(email);
         }
@@ -113,9 +121,15 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
         }
       } else {
         // Supabase sign in
-        // Placeholder for Supabase sign in logic
-        // In a real app, you would call supabase.auth.signInWithPassword({ email, password });
-        // For now, just simulate success
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) {
+          setError(signInError.message);
+          setLoading(false);
+          return;
+        }
         onLogin();
       }
     } catch (err: any) {
@@ -130,9 +144,16 @@ export function LoginScreen({ onLogin, onNavigate, onGoBack, onSignupWithUpworkC
     setError("")
     try {
       // Supabase OAuth sign in
-      // Placeholder for Supabase OAuth sign in logic
-      // In a real app, you would call supabase.auth.signInWithOAuth({ provider: 'google' });
-      // For now, just simulate success
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+      if (oauthError) {
+        setError(oauthError.message);
+        setLoading(false);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
       onLogin();
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred")
