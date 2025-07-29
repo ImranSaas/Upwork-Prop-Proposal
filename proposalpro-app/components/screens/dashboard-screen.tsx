@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { FileText, Bell, Briefcase, TrendingUp, Clock, DollarSign, ExternalLink, MapPin, Star, Check, Mail, Edit, CheckCircle, Users, Calendar, Sparkles, Send, Verified, ArrowRight } from "lucide-react"
 import type { Screen } from "@/app/page"
 import { JobCard } from "@/components/ui/job-card"
+import { supabase } from "@/lib/supabaseClient";
 
 interface DashboardScreenProps {
   onNavigate: (screen: Screen) => void
@@ -176,14 +177,21 @@ export function DashboardScreen({ onNavigate, setSelectedJob }: DashboardScreenP
 
   useEffect(() => {
     const fetchUser = async () => {
-      // Try to get first name from user_metadata or full_name
-      // let name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
-      // if (name) {
-      //   // Use only the first part if full name
-      //   setFirstName(name.split(" ")[0]);
-      // } else {
-      //   setFirstName(user.email ?? "");
-      // }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Try to get first name from user_metadata or full_name
+          const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+          if (name) {
+            // Use only the first part if full name
+            setFirstName(name.split(" ")[0]);
+          } else {
+            setFirstName("");
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
     };
     fetchUser();
   }, []);

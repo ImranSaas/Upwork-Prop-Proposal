@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Check, ChevronLeft, ChevronRight, Sparkles, CheckCircle } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const keywordSuggestions = [
   "React", "Copywriting", "AI", "Shopify", "Figma", "UX Design", "Web Development", "SEO", "Branding", "Python", "Data Analysis", "Marketing", "Content Writing", "Project Management", "WordPress", "Mobile Apps"
@@ -15,7 +16,7 @@ const keywordSuggestions = [
 const experienceLevels = ["Entry", "Intermediate", "Expert"];
 
 interface JobPreferencesOnboardingProps {
-  onComplete: (prefs: any) => void;
+  onComplete: (prefs: any) => Promise<void>;
 }
 
 export function JobPreferencesOnboarding({ onComplete }: JobPreferencesOnboardingProps) {
@@ -61,41 +62,51 @@ export function JobPreferencesOnboarding({ onComplete }: JobPreferencesOnboardin
     setSaving(true);
     setError("");
     try {
-      // 1. Get the current user
-      // 1. Get the current user
-
-      // Debug logs
-      console.log('Onboarding - Saving preferences with values:', {
-        hourlyMin,
-        fixedMin,
-        hourlyMinType: typeof hourlyMin,
-        fixedMinType: typeof fixedMin
-      });
+      // 1. Get the current user from Supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error(userError?.message || 'User not authenticated');
+      }
 
       // 2. Prepare the data
       const preferences = {
-        user_id: "mock_user_id", // Mock user ID for frontend
+        user_id: user.id,
         keywords: Array.isArray(keywords) ? keywords.join(",") : keywords,
         hourly_min: hourlyMin !== "" ? Number(hourlyMin) : null,
         fixed_min: fixedMin !== "" ? Number(fixedMin) : null,
         experience_levels: Array.isArray(experience) ? experience.join(",") : experience,
         min_client_spend: minClientSpend ? Number(minClientSpend) : null,
         client_verified: clientVerified,
-        min_client_rating: minClientRating ? Number(minClientRating) : null,
+        min_client_rating: minClientRating ? Number(minClientRating) : null
       };
 
-      console.log('Onboarding - Final preferences object:', preferences);
+      console.log('Saving preferences:', preferences);
 
       // 3. Upsert (insert or update) the preferences
-      // 3. Upsert (insert or update) the preferences
+      const { data, error: upsertError } = await supabase
+        .from('job_alert_preferences')
+        .upsert(
+          [preferences],
+          { onConflict: 'user_id' }
+        )
+        .select();
 
-      if (error) {
-        console.error('Onboarding - Save error:', error);
-        setError("Failed to save preferences: " + error.message);
-        setSaving(false);
-        return;
+      if (upsertError) {
+        console.error('Failed to save preferences:', upsertError);
+        throw new Error(upsertError.message);
       }
-      onComplete({
+
+      console.log('Preferences saved successfully:', data);
+      
+      // Show success message first
+      setShowSuccess(true);
+      
+      // Wait a moment for the user to see the success message
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Then call the onComplete callback which will handle the navigation
+      await onComplete({
         keywords,
         hourlyMin,
         fixedMin,
@@ -104,8 +115,6 @@ export function JobPreferencesOnboarding({ onComplete }: JobPreferencesOnboardin
         clientVerified,
         minClientRating,
       });
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1800);
     } catch (e: any) {
       setError(e.message || "Failed to save preferences");
     } finally {

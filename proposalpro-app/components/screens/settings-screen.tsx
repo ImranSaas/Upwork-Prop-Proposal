@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "next-themes"
+import { supabase } from "@/lib/supabaseClient"
 import {
   User,
   Bell,
@@ -25,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -142,21 +144,39 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
   };
 
   useEffect(() => {
-    // Mock user data
-    setUser({ name: "John Doe", email: "john.doe@example.com" });
-    setEditName("John Doe");
-    setEditEmail("john.doe@example.com");
+    const fetchUserData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const userName = user.user_metadata?.full_name || user.user_metadata?.name || 'User';
+          const userEmail = user.email || '';
+          
+          setUser({ name: userName, email: userEmail });
+          setEditName(userName);
+          setEditEmail(userEmail);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Fallback to default values if there's an error
+        setUser({ name: 'User', email: '' });
+        setEditName('User');
+        setEditEmail('');
+      }
 
-    // Mock preferences
-    setKeywords(["React", "Copywriting", "AI"]);
-    setHourlyMin("50");
-    setFixedMin("500");
-    setExperience(["Intermediate"]);
-    setClientVerified(true);
-    setMinClientSpend("1000");
-    setMinClientRating("4.0");
+      // Reset all preferences to empty/default values
+      setKeywords([]);
+      setHourlyMin("");
+      setFixedMin("");
+      setExperience([]);
+      setClientVerified(false);
+      setMinClientSpend("");
+      setMinClientRating("");
 
-    setLoadingPreferences(false);
+      setLoadingPreferences(false);
+    };
+
+    fetchUserData();
   }, []);
 
   // Billing
@@ -229,23 +249,32 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Profile</DialogTitle>
+              <CardDescription>Update your display name</CardDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <input
-                className="input w-full bg-background border rounded p-2"
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                placeholder="Name"
-              />
-              <input
-                className="input w-full bg-background border rounded p-2"
-                value={editEmail}
-                onChange={e => setEditEmail(e.target.value)}
-                placeholder="Email"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="editName">Display Name</Label>
+                <Input
+                  id="editName"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Enter your name"
+                />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  value={user.email}
+                  readOnly
+                  disabled
+                  className="opacity-70 cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              </div>
+            </div>
             <DialogFooter className="flex gap-2 pt-2">
-              <Button onClick={handleEditProfile} className="bg-primary hover:bg-primary/90">Save</Button>
+              <Button onClick={handleEditProfile} className="bg-primary hover:bg-primary/90">Save Changes</Button>
               <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
             </DialogFooter>
           </DialogContent>
