@@ -17,17 +17,13 @@ import { JobAlertSettingsModal } from "@/components/screens/job-alert-settings-m
 import { PipelineDashboard } from "@/components/screens/pipeline-dashboard"
 import { ClientMessaging } from "@/components/screens/client-messaging"
 import { PipelineReminderModal } from "@/components/screens/pipeline-reminder-modal"
-import { OnboardingWizard } from "@/components/screens/onboarding-wizard"
 import { BillingScreen } from "@/components/screens/billing-screen"
 import { LoginScreen } from "@/components/screens/login-screen"
-import { UpworkConnectModal } from "@/components/screens/upwork-connect-modal"
 import { ApiErrorScreen } from "@/components/screens/api-error-screen"
 import { LandingPage } from "@/components/screens/landing-page"
 import { NotificationsScreen } from "@/components/screens/notifications-screen"
 import { JobFeedScreen } from "@/components/screens/job-feed-screen"
 import { ProposalDetailsScreen } from "@/components/screens/proposal-details-screen"
-import AccountVerificationScreen from "@/components/screens/account-verification-screen"
-import { JobPreferencesOnboarding } from "@/components/screens/job-preferences-onboarding";
 import { supabase } from "@/lib/supabaseClient";
 
 export type Screen =
@@ -59,105 +55,87 @@ export type Screen =
 export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen | null>(null)
   const [navigationHistory, setNavigationHistory] = useState<Screen[]>([])
-  const [showUpworkModal, setShowUpworkModal] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [selectedProposal, setSelectedProposal] = useState(null)
-  const [showJobPrefsOnboarding, setShowJobPrefsOnboarding] = useState(false)
-  const [showExtensionModal, setShowExtensionModal] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [canGoBack, setCanGoBack] = useState(false)
-
-  // Direct login without onboarding steps
-  const handleLogin = async () => {
-    setCurrentScreen("dashboard");
-    setNavigationHistory(["dashboard"]);
-  };
 
   useEffect(() => {
-    let currentSession: any = null;
-    let isMounted = true;
-
-    const handleAuthStateChange = async (event: string, session: any) => {
-      if (!isMounted) return;
-      
-      const isNewSession = (!currentSession && session) || 
-                         (currentSession && !session) || 
-                         (currentSession?.user?.id !== session?.user?.id);
-      
-      currentSession = session;
-      
-      if (isNewSession || event === 'INITIAL_SESSION') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
         if (session) {
-          // User is signed in, go directly to dashboard
-          if (isMounted) {
-            setCurrentScreen("dashboard");
-            setNavigationHistory(["dashboard"]);
-          }
+          // Only update screen if we're not already on a valid screen
+          setCurrentScreen(current => {
+            // If current screen is null or one of the auth screens, go to dashboard
+            if (!current || ["landing", "login"].includes(current)) {
+              return "dashboard";
+            }
+            // Otherwise, keep the current screen
+            return current;
+          });
+          
+          // Only reset navigation history if we're coming from an auth screen
+          setNavigationHistory(prev => {
+            if (prev.length === 0 || ["landing", "login"].includes(prev[prev.length - 1])) {
+              return ["dashboard"];
+            }
+            return prev;
+          });
         } else {
-          // User is signed out, go to landing page
-          if (isMounted) {
-            setCurrentScreen("landing");
-            setNavigationHistory(["landing"]);
-            setSelectedJob(null);
-            setSelectedProposal(null);
-          }
+          // User is signed out - reset to landing
+          setCurrentScreen("landing");
+          setNavigationHistory(["landing"]);
+          setSelectedJob(null);
+          setSelectedProposal(null);
         }
-      }
-      
-      if (isMounted) {
         setIsLoading(false);
       }
-    };
+    );
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    // Initial auth check
+    // Initial check
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        await handleAuthStateChange('INITIAL_SESSION', session);
+        if (session) {
+          // On initial load, only set to dashboard if we don't have a current screen
+          setCurrentScreen(current => current || "dashboard");
+          setNavigationHistory(prev => prev.length > 0 ? prev : ["dashboard"]);
+        } else {
+          setCurrentScreen("landing");
+          setNavigationHistory(["landing"]);
+        }
       } catch (error) {
         console.error('Error checking auth status:', error);
-        if (isMounted) {
-          setCurrentScreen("landing");
-          setIsLoading(false);
-        }
+        setCurrentScreen("error");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
 
     return () => {
-      isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [])
+  }, []);
 
   // Navigation handlers
-  const handleNavigate = (screen: Screen) => {
-    setNavigationHistory(prev => [...prev, currentScreen!]);
-    setCurrentScreen(screen);
-    setCanGoBack(navigationHistory.length > 0);
+  const handleNavigate = (screen: Screen | 'crm-pipeline') => {
+    const mappedScreen: Screen = screen === 'crm-pipeline' ? 'pipeline' : screen as Screen;
+    setNavigationHistory((prev) => [...prev, currentScreen as Screen]);
+    setCurrentScreen(mappedScreen);
   };
 
   const handleGoBack = () => {
     if (navigationHistory.length > 0) {
       const previousScreen = navigationHistory[navigationHistory.length - 1];
-      setNavigationHistory(prev => prev.slice(0, -1));
+      setNavigationHistory((prev) => prev.slice(0, -1));
       setCurrentScreen(previousScreen);
-      setCanGoBack(navigationHistory.length > 1);
     }
   };
 
-  // Simple handlers for auth flows
-  const handleSignupSuccess = () => {
-    setCurrentScreen("dashboard");
-    setNavigationHistory(["dashboard"]);
-  };
+  const canGoBack = navigationHistory.length > 0;
 
-  const handleSignupShowJobPreferences = () => {
-    // Skip job preferences, go directly to dashboard
+  const handleLogin = () => {
     setCurrentScreen("dashboard");
     setNavigationHistory(["dashboard"]);
   };
@@ -171,76 +149,10 @@ export default function Home() {
       }
       setCurrentScreen("landing");
       setNavigationHistory([]);
-      setShowUpworkModal(false);
     } catch (error) {
       console.error('Error during sign out:', error);
     }
   };
-
-  const handleShowUpworkModal = () => {
-    setShowUpworkModal(true)
-  }
-
-  const handleCloseUpworkModal = () => {
-    setShowUpworkModal(false)
-  }
-
-  const handleChromeExtensionComplete = () => {
-    setCurrentScreen("job-preferences-onboarding");
-  };
-
-  const handleVerificationComplete = () => {
-    // Go directly to dashboard after verification
-    setCurrentScreen("dashboard");
-    setNavigationHistory(["dashboard"]);
-  };
-
-  const checkOnboardingStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('job_preferences_set')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      return data || { job_preferences_set: false };
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      return { job_preferences_set: false };
-    }
-  };
-
-  const handleJobPrefsComplete = async (prefs?: any) => {
-    try {
-      // If there are preferences to save, you can handle them here
-      if (prefs) {
-        // Add logic to save preferences if needed
-      }
-      setShowJobPrefsOnboarding(false);
-      setCurrentScreen("dashboard");
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Error saving job preferences:', error);
-      return Promise.reject(error);
-    }
-  };
-
-  const handleUpworkConnect = async () => {
-    setShowUpworkModal(false);
-    
-    // After connecting Upwork, check if we need to show job prefs
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const onboardingStatus = await checkOnboardingStatus(user.id);
-      if (!onboardingStatus.job_preferences_set) {
-        setShowJobPrefsOnboarding(true);
-        setCurrentScreen("job-preferences-onboarding");
-      } else {
-        setCurrentScreen("dashboard");
-      }
-    }
-  }
 
   // Screens accessible from the sidebar
   const sidebarScreens: Screen[] = [
@@ -251,34 +163,19 @@ export default function Home() {
     "settings"
   ];
 
-  // Show landing page, login screen, or verification screen without sidebar
-  if (currentScreen && ["landing", "login", "verification"].includes(currentScreen)) {
+  // Show landing page or login screen without sidebar
+  if (["landing", "login"].includes(currentScreen || "")) {
     return (
       <div className="min-h-screen bg-background">
         {currentScreen === "landing" && <LandingPage onNavigate={handleNavigate} />}
         {currentScreen === "login" && (
           <LoginScreen 
             onNavigate={handleNavigate} 
-            onLogin={() => setCurrentScreen("dashboard")}
-            onSignupWithUpworkConnect={handleShowUpworkModal}
-            onSignupSuccess={handleSignupSuccess}
-            onSignupShowJobPreferences={handleSignupShowJobPreferences}
+            onLogin={handleLogin}
           />
         )}
-        {currentScreen === "verification" && (
-          <AccountVerificationScreen 
-            onVerificationComplete={handleVerificationComplete}
-            onGoBack={canGoBack ? handleGoBack : undefined}
-          />
-        )}
-        {showUpworkModal && <UpworkConnectModal onNavigate={handleNavigate} onConnectAndLogin={handleChromeExtensionComplete} />}
       </div>
     )
-  }
-
-  // Show onboarding wizard if needed
-  if (currentScreen === "job-preferences-onboarding") {
-    return <JobPreferencesOnboarding onComplete={handleJobPrefsComplete} />;
   }
 
   // Show loading state while checking auth or if currentScreen is not set yet
@@ -290,13 +187,10 @@ export default function Home() {
     )
   }
 
+  // No-op handlers for required props
+  const noop = () => {};
 
   const renderScreen = () => {
-    // Type guard to ensure currentScreen is not null
-    if (!currentScreen) {
-      return <DashboardScreen onNavigate={handleNavigate} setSelectedJob={() => {}} />;
-    }
-    
     switch (currentScreen) {
       case "dashboard":
         return <DashboardScreen onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
@@ -305,13 +199,13 @@ export default function Home() {
       case "proposal-editor":
         return <ProposalEditor onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
       case "proposal-success":
-        return <ProposalSuccessModal onNavigate={handleNavigate} onClose={() => {}} />
+        return <ProposalSuccessModal onNavigate={handleNavigate} onClose={noop} />
       case "job-alerts":
         return <JobAlertsDashboard onNavigate={handleNavigate} setSelectedJob={setSelectedJob} />
       case "job-details":
         return <JobDetailsScreen job={selectedJob} onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
       case "job-alert-settings":
-        return <JobAlertSettingsModal onClose={() => {}} onSave={async () => { return Promise.resolve(); }} />
+        return <JobAlertSettingsModal onClose={noop} onSave={noop} />
       case "pipeline":
         return <PipelineDashboard onNavigate={handleNavigate} setSelectedProposal={setSelectedProposal} />
       case "messaging":
@@ -328,8 +222,7 @@ export default function Home() {
         return <ErrorScreen onNavigate={handleNavigate} />
       case "api-error":
         return <ApiErrorScreen onNavigate={handleNavigate} />
-      case "onboarding":
-        return <OnboardingWizard onComplete={() => {}} />
+      
       case "notifications":
         return <NotificationsScreen onNavigate={handleNavigate} onGoBack={!sidebarScreens.includes(currentScreen) && canGoBack ? handleGoBack : undefined} />
       case "job-feed":
@@ -358,4 +251,4 @@ export default function Home() {
       </div>
     </SidebarProvider>
   )
-};
+}

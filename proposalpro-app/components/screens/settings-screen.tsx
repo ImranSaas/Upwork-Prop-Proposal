@@ -96,19 +96,17 @@ function TagInput({ label, placeholder, value, setValue, suggestions = [] }: { l
   );
 }
 
-export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
-  const { theme, setTheme } = useTheme()
+export function SettingsScreen({ onLogout }: SettingsScreenProps) {
+  // Theme is handled by the system
   // Fetch user data from Supabase
   const [user, setUser] = useState<{ name: string; email: string }>({ name: "", email: "" })
-  const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState("")
   const [editEmail, setEditEmail] = useState("")
   // Upwork connection
   const [upworkConnected, setUpworkConnected] = useState(true)
-  // Notification toggles
+  // Notification toggles (handled locally)
   const [emailJobAlerts, setEmailJobAlerts] = useState(true)
   const [aiTips, setAiTips] = useState(false)
-  // Privacy toggle
   const [allowLearning, setAllowLearning] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
   const [saving, setSaving] = useState(false);
@@ -116,7 +114,8 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [loadingPreferences, setLoadingPreferences] = useState(true);
 
-  const [keywords, setKeywords] = useState<string[]>([]); // No default keywords
+  // Job preferences state
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [hourlyMin, setHourlyMin] = useState<string>("");
   const [fixedMin, setFixedMin] = useState<string>("");
   const [experience, setExperience] = useState<string[]>([]);
@@ -143,10 +142,41 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
     }
   };
 
+  // Load user preferences from Supabase
+  const loadUserPreferences = async (userId: string) => {
+    try {
+      const { data: preferences, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+
+      if (preferences) {
+        setKeywords(preferences.keywords || []);
+        setHourlyMin(preferences.hourly_rate_min?.toString() || '');
+        setFixedMin(preferences.fixed_price_min?.toString() || '');
+        setExperience(preferences.experience_levels || []);
+        setClientVerified(preferences.client_verified_only || false);
+        setMinClientSpend(preferences.min_client_spend?.toString() || '');
+        setMinClientRating(preferences.min_client_rating?.toString() || '');
+        // Notification and privacy preferences are now handled locally
+      }
+    } catch (error) {
+      console.error('Error loading user preferences:', error);
+      // Continue with default values if there's an error
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) throw error;
         
         if (user) {
           const userName = user.user_metadata?.full_name || user.user_metadata?.name || 'User';
@@ -155,6 +185,9 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
           setUser({ name: userName, email: userEmail });
           setEditName(userName);
           setEditEmail(userEmail);
+          
+          // Load user preferences
+          await loadUserPreferences(user.id);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -162,18 +195,9 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
         setUser({ name: 'User', email: '' });
         setEditName('User');
         setEditEmail('');
+      } finally {
+        setLoadingPreferences(false);
       }
-
-      // Reset all preferences to empty/default values
-      setKeywords([]);
-      setHourlyMin("");
-      setFixedMin("");
-      setExperience([]);
-      setClientVerified(false);
-      setMinClientSpend("");
-      setMinClientRating("");
-
-      setLoadingPreferences(false);
     };
 
     fetchUserData();
@@ -185,7 +209,6 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
   // Handlers
   const handleEditProfile = () => {
     setUser({ name: editName, email: editEmail })
-    setEditing(false)
   }
 
   const handleSavePreferences = async () => {
@@ -193,20 +216,64 @@ export function SettingsScreen({ onLogout, onNavigate }: SettingsScreenProps) {
     setSaveError(null);
     setSaveSuccess(false);
 
-    // Mock save logic
-    console.log('Saving preferences with values:', {
-      hourlyMin,
-      fixedMin,
-      hourlyMinType: typeof hourlyMin,
-      fixedMinType: typeof fixedMin
-    });
+    try {
+      console.log('Starting to save preferences...');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('User not authenticated:', userError);
+        throw new Error('User not authenticated');
+      }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('User authenticated, preparing preferences data...');
+      const preferences = {
+        id: user.id, // Make sure we include the primary key for upsert
+        user_id: user.id,
+        keywords: keywords,
+        hourly_rate_min: hourlyMin ? parseFloat(hourlyMin) : null,
+        fixed_price_min: fixedMin ? parseFloat(fixedMin) : null,
+        experience_levels: experience,
+        client_verified_only: clientVerified,
+        min_client_spend: minClientSpend ? parseFloat(minClientSpend) : null,
+        min_client_rating: minClientRating ? parseFloat(minClientRating) : null
+      };
 
-    setSaveSuccess(true);
-    setSaveError(null);
-    setSaving(false);
+      console.log('Preferences data prepared:', preferences);
+
+      // First try to insert, if it fails with unique violation, then update
+      console.log('Attempting to upsert preferences...');
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert([preferences], { onConflict: 'id' })
+        .select();
+
+      console.log('Upsert response:', { data, error });
+
+      if (error) {
+        console.error('Detailed error from Supabase:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+
+      console.log('Preferences saved successfully:', data);
+      setSaveSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error in handleSavePreferences:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : ''
+      });
+      setSaveError(`Failed to save preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loadingPreferences) {
